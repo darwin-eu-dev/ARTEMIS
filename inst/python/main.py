@@ -186,6 +186,7 @@ def align_patients_regimens(
     col_name_patient_record="seq",
     col_name_regimens="shortString",
     col_name_regName="regName",
+    col_name_regCode="regCode",
     g=0.4,
     T=0.5,
     s=None,
@@ -222,6 +223,7 @@ def align_patients_regimens(
                 )
 
                 df["regName"] = row2[col_name_regName]
+                df["regCode"] = row2[col_name_regCode]
                 df["Regimen_full"] = row2[col_name_regimens]
                 df["personID"] = row1[col_name_patient_id]
                 df["DrugRecord_full"] = row1[col_name_patient_record]
