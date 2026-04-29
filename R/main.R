@@ -64,6 +64,10 @@ generateRawAlignments <- function(stringDF,
 
     output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, method=method)
 
+    output = output$to_dict(orient = "list") |> 
+      reticulate::py_to_r() |> 
+      as.data.frame()
+
     if (nrow(output) == 0) {
         cli::cat_bullet(
             paste("No alignments", sep = ""),

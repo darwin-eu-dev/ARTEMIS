@@ -16,6 +16,7 @@ def align_patients_regimens(
     col_name_patient_record="seq",
     col_name_regimens="shortString",
     col_name_regName="regName",
+    col_name_regCode="regCode",
     g=0.4,
     T=0.5,
     s=None,
@@ -30,6 +31,7 @@ def align_patients_regimens(
         col_name_patient_record=col_name_patient_record,
         col_name_regimens=col_name_regimens,
         col_name_regName=col_name_regName,
+        col_name_regCode=col_name_regCode,
         g=g,
         T=T,
         s=s,
@@ -56,6 +58,7 @@ def main():
         {
             "regName": ["Regimen1"],
             "shortString": ["14.pemetrexed;14.pemetrexed;"],
+            "regCode": ["1"]
         }
     )
 
