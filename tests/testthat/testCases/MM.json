@@ -1,0 +1,262 @@
+{
+  "person": [
+    {
+      "person_id": "1",
+      "gender_concept_id": "8532",
+      "year_of_birth": "1960",
+      "race_concept_id": "0",
+      "ethnicity_concept_id": "0",
+      "location_id": "0",
+      "provider_id": "0",
+      "care_site_id": "0",
+      "person_source_value": "P1",
+      "gender_source_value": "F"
+    },
+    {
+      "person_id": "2",
+      "gender_concept_id": "8507",
+      "year_of_birth": "1955",
+      "race_concept_id": "0",
+      "ethnicity_concept_id": "0",
+      "location_id": "0",
+      "provider_id": "0",
+      "care_site_id": "0",
+      "person_source_value": "P2",
+      "gender_source_value": "M"
+    },
+    {
+      "person_id": "3",
+      "gender_concept_id": "8532",
+      "year_of_birth": "1970",
+      "race_concept_id": "0",
+      "ethnicity_concept_id": "0",
+      "location_id": "0",
+      "provider_id": "0",
+      "care_site_id": "0",
+      "person_source_value": "P3",
+      "gender_source_value": "F"
+    },
+    {
+      "person_id": "4",
+      "gender_concept_id": "8507",
+      "year_of_birth": "1965",
+      "race_concept_id": "0",
+      "ethnicity_concept_id": "0",
+      "location_id": "0",
+      "provider_id": "0",
+      "care_site_id": "0",
+      "person_source_value": "P4",
+      "gender_source_value": "M"
+    }
+  ],
+  "observation_period": [
+    {
+      "observation_period_id": "1",
+      "person_id": "1",
+      "observation_period_start_date": "2015-01-01",
+      "observation_period_end_date": "2023-12-31",
+      "period_type_concept_id": "32828"
+    },
+    {
+      "observation_period_id": "2",
+      "person_id": "2",
+      "observation_period_start_date": "2010-05-15",
+      "observation_period_end_date": "2022-05-14",
+      "period_type_concept_id": "32828"
+    },
+    {
+      "observation_period_id": "3",
+      "person_id": "3",
+      "observation_period_start_date": "2018-03-10",
+      "observation_period_end_date": "2024-03-09",
+      "period_type_concept_id": "32828"
+    },
+    {
+      "observation_period_id": "4",
+      "person_id": "4",
+      "observation_period_start_date": "2012-07-20",
+      "observation_period_end_date": "2023-07-19",
+      "period_type_concept_id": "32828"
+    }
+  ],
+  "condition_occurrence": [
+    {
+      "condition_occurrence_id": "1",
+      "person_id": "1",
+      "condition_concept_id": "437233",
+      "condition_start_date": "2020-02-15",
+      "condition_type_concept_id": "38000275",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "condition_source_value": "437233",
+      "condition_source_concept_id": "437233",
+      "condition_status_concept_id": "0"
+    },
+    {
+      "condition_occurrence_id": "2",
+      "person_id": "2",
+      "condition_concept_id": "437233",
+      "condition_start_date": "2015-09-10",
+      "condition_type_concept_id": "38000275",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "condition_source_value": "437233",
+      "condition_source_concept_id": "437233",
+      "condition_status_concept_id": "0"
+    },
+    {
+      "condition_occurrence_id": "3",
+      "person_id": "3",
+      "condition_concept_id": "437233",
+      "condition_start_date": "2019-06-01",
+      "condition_type_concept_id": "38000275",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "condition_source_value": "437233",
+      "condition_source_concept_id": "437233",
+      "condition_status_concept_id": "0"
+    },
+    {
+      "condition_occurrence_id": "4",
+      "person_id": "4",
+      "condition_concept_id": "437233",
+      "condition_start_date": "2017-12-20",
+      "condition_type_concept_id": "38000275",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "condition_source_value": "437233",
+      "condition_source_concept_id": "437233",
+      "condition_status_concept_id": "0"
+    }
+  ],
+  "drug_exposure": [
+    {
+      "drug_exposure_id": "1",
+      "person_id": "1",
+      "drug_concept_id": "35604205",
+      "drug_exposure_start_date": "2020-03-01",
+      "drug_type_concept_id": "38000175",
+      "refills": "0",
+      "quantity": "30",
+      "days_supply": "30",
+      "sig": "Take one tablet daily",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "35604205",
+      "drug_source_concept_id": "35604205"
+    },
+    {
+      "drug_exposure_id": "2",
+      "person_id": "1",
+      "drug_concept_id": "1551099",
+      "drug_exposure_start_date": "2020-03-15",
+      "drug_type_concept_id": "38000175",
+      "refills": "1",
+      "quantity": "15",
+      "days_supply": "15",
+      "sig": "Take 15 mg daily",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "1551099",
+      "drug_source_concept_id": "1551099"
+    },
+    {
+      "drug_exposure_id": "3",
+      "person_id": "2",
+      "drug_concept_id": "19137042",
+      "drug_exposure_start_date": "2015-09-15",
+      "drug_type_concept_id": "38000175",
+      "refills": "0",
+      "quantity": "90",
+      "days_supply": "90",
+      "sig": "Take as prescribed",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "19137042",
+      "drug_source_concept_id": "19137042"
+    },
+    {
+      "drug_exposure_id": "4",
+      "person_id": "2",
+      "drug_concept_id": "1397599",
+      "drug_exposure_start_date": "2016-01-10",
+      "drug_type_concept_id": "38000175",
+      "refills": "1",
+      "quantity": "45",
+      "days_supply": "45",
+      "sig": "Take 45 mg daily",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "1397599",
+      "drug_source_concept_id": "1397599"
+    },
+    {
+      "drug_exposure_id": "5",
+      "person_id": "3",
+      "drug_concept_id": "1361191",
+      "drug_exposure_start_date": "2019-06-05",
+      "drug_type_concept_id": "38000175",
+      "refills": "2",
+      "quantity": "60",
+      "days_supply": "60",
+      "sig": "Take every other day",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "1361191",
+      "drug_source_concept_id": "1361191"
+    },
+    {
+      "drug_exposure_id": "6",
+      "person_id": "3",
+      "drug_concept_id": "43014237",
+      "drug_exposure_start_date": "2019-06-10",
+      "drug_type_concept_id": "38000175",
+      "refills": "0",
+      "quantity": "30",
+      "days_supply": "30",
+      "sig": "Take 30 mg daily",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "43014237",
+      "drug_source_concept_id": "43014237"
+    },
+    {
+      "drug_exposure_id": "7",
+      "person_id": "4",
+      "drug_concept_id": "1551099",
+      "drug_exposure_start_date": "2018-01-15",
+      "drug_type_concept_id": "38000175",
+      "refills": "0",
+      "quantity": "20",
+      "days_supply": "20",
+      "sig": "Take 20 mg daily",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "1551099",
+      "drug_source_concept_id": "1551099"
+    },
+    {
+      "drug_exposure_id": "8",
+      "person_id": "4",
+      "drug_concept_id": "19137042",
+      "drug_exposure_start_date": "2018-01-20",
+      "drug_type_concept_id": "38000175",
+      "refills": "1",
+      "quantity": "60",
+      "days_supply": "60",
+      "sig": "Take as directed",
+      "route_concept_id": "0",
+      "provider_id": "0",
+      "visit_occurrence_id": "0",
+      "drug_source_value": "19137042",
+      "drug_source_concept_id": "19137042"
+    }
+  ]
+}

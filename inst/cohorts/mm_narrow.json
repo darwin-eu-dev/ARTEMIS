@@ -1,0 +1,308 @@
+{
+  "items": [
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "109989006",
+        "CONCEPT_ID": 437233,
+        "CONCEPT_NAME": "Multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": false,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "209962000",
+        "CONCEPT_ID": 4019477,
+        "CONCEPT_NAME": "Myeloma-associated amyloidosis",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": false,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Clinical Finding",
+        "CONCEPT_CODE": "167934009",
+        "CONCEPT_ID": 4043447,
+        "CONCEPT_NAME": "Bone marrow: myeloma cells",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": false,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "230586003",
+        "CONCEPT_ID": 4043713,
+        "CONCEPT_NAME": "Neuropathy due to multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "32278006",
+        "CONCEPT_ID": 4137433,
+        "CONCEPT_NAME": "Myeloma kidney",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": false,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Morph Abnormality",
+        "CONCEPT_CODE": "399456004",
+        "CONCEPT_ID": 4163558,
+        "CONCEPT_NAME": "Plasma cell myeloma/plasmacytoma",
+        "DOMAIN_ID": "Observation",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2003-07-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": false,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "414785000",
+        "CONCEPT_ID": 4214660,
+        "CONCEPT_NAME": "Multiple solitary plasmacytomas",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2005-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": false,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "16318001000119107",
+        "CONCEPT_ID": 37209514,
+        "CONCEPT_NAME": "Hypogammaglobulinemia due to multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2019-07-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": false,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Clinical Finding",
+        "CONCEPT_CODE": "19650001000004104",
+        "CONCEPT_ID": 3168489,
+        "CONCEPT_NAME": "Multiple myeloma in relapse",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "Nebraska Lexicon",
+        "VALID_START_DATE": "2016-01-28",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "739301006",
+        "CONCEPT_ID": 42538151,
+        "CONCEPT_NAME": "Osteoporosis co-occurrent and due to multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2018-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "402453006",
+        "CONCEPT_ID": 4224628,
+        "CONCEPT_NAME": "Amyloid light chain amyloidosis due to multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2003-07-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "16318001000119107",
+        "CONCEPT_ID": 37209514,
+        "CONCEPT_NAME": "Hypogammaglobulinemia due to multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2019-07-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": false,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "94704006",
+        "CONCEPT_ID": 436059,
+        "CONCEPT_NAME": "Multiple myeloma in remission",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "230586003",
+        "CONCEPT_ID": 4043713,
+        "CONCEPT_NAME": "Neuropathy due to multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2002-01-31",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "122981000119101",
+        "CONCEPT_ID": 760936,
+        "CONCEPT_NAME": "Plasma cell leukemia in relapse",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2017-09-01",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    },
+    {
+      "concept": {
+        "CONCEPT_CLASS_ID": "Disorder",
+        "CONCEPT_CODE": "452291000124109",
+        "CONCEPT_ID": 764229,
+        "CONCEPT_NAME": "Relapse multiple myeloma",
+        "DOMAIN_ID": "Condition",
+        "INVALID_REASON": "V",
+        "INVALID_REASON_CAPTION": "Valid",
+        "STANDARD_CONCEPT": "S",
+        "STANDARD_CONCEPT_CAPTION": "Standard",
+        "VOCABULARY_ID": "SNOMED",
+        "VALID_START_DATE": "2017-03-01",
+        "VALID_END_DATE": "2099-12-31"
+      },
+      "isExcluded": true,
+      "includeDescendants": true,
+      "includeMapped": false
+    }
+  ]
+}

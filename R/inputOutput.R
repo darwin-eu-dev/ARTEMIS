@@ -1,3 +1,39 @@
+#' Generate a con_df dataframe using CDMConnector
+#' @param cdm An OMOP cdm reference
+#' @param cohortName Name of cohort table
+#' @param cdmSchema A schema containing a valid OMOP CDM
+#' @param writeSchema A schema where the user has write access
+#' @return A con_df dataframe
+#' @export
+dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL){
+  
+  con_df <- cdm$drug_exposure |> 
+    dplyr::inner_join(
+      cdm[[cohortName]],
+      by = c("person_id" = "subject_id")
+    ) |> 
+    dplyr::left_join(
+      cdm$concept_ancestor,
+      by = c("drug_concept_id" = "descendant_concept_id")
+    ) |> 
+    dplyr::left_join(
+      cdm$concept,
+      by = c("ancestor_concept_id" = "concept_id")
+    ) |> 
+    dplyr::filter(
+      tolower(concept_class_id) == "ingredient"
+    ) |> 
+    dplyr::transmute(
+      person_id = as.character(person_id),
+      drug_exposure_start_date,
+      drug_concept_id,
+      ancestor_concept_id,
+      concept_name
+    )
+
+  return(con_df)
+}
+
 #' Generate a con_df dataframe without using CDMConnector
 #' @param connectionDetails A set of DatabaseConnector connectiondetails
 #' @param json A loaded cohort from loadJSON()
