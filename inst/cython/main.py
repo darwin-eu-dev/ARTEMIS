@@ -58,6 +58,7 @@ def main():
         {
             "regName": ["Regimen1"],
             "shortString": ["14.pemetrexed;14.pemetrexed;"],
+            "regCode": ["1"]
         }
     )
 
