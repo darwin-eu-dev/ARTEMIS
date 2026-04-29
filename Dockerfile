@@ -43,6 +43,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* \
   && R CMD javareconf
 
+RUN install2.r --error remotes
+RUN install2.r --error devtools
+RUN install2.r --error rJava
+
 RUN python -m pip install --no-cache-dir --break-system-packages \
     numpy \
     pandas==2.3.3 \
@@ -51,8 +55,8 @@ RUN python -m pip install --no-cache-dir --break-system-packages \
 
 RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' >> "${R_HOME}/etc/Rprofile.site"
 
-RUN install2.r --error rJava remotes devtools \
-  && rm -rf /tmp/download_packages/ /tmp/*.rds
+# RUN install2.r --error rJava remotes devtools \
+#   && rm -rf /tmp/download_packages/ /tmp/*.rds
 
 RUN install2.r --error DatabaseConnector \
   && rm -rf /tmp/download_packages/ /tmp/*.rds
@@ -91,8 +95,6 @@ RUN install2.r --error CirceR CohortGenerator RSQLite \
   && rm -rf /tmp/download_packages/ /tmp/*.rds
 
 WORKDIR ${ARTEMIS_HOME}
-
-ENV PASSWORD=artemis
 
 EXPOSE 8787
 

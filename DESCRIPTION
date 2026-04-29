@@ -30,7 +30,8 @@ Imports:
     ggsci,
     gridExtra,
     methods,
-    RColorBrewer
+    RColorBrewer,
+    RPostgres
 License: Apache License (>= 2)
 VignetteBuilder: knitr
 Encoding: UTF-8

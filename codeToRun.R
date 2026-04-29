@@ -1,5 +1,4 @@
 # Example script that walks through running ARTEMIS
-devtools::install()
 library(ARTEMIS)
 
 # Set Minimum cell count
@@ -10,7 +9,7 @@ cdmName <- NULL
 
 # create your database connection here
 con <- DBI::dbConnect(
-  your_dbms,
+  RPostgres::Postgres(),
   dbname = "...",
   host = "...",
   user = "...",
@@ -18,7 +17,7 @@ con <- DBI::dbConnect(
 )
 
 # Create the CDM object
-cdm <- cdmFromCon(
+cdm <- CDMConnector::cdmFromCon(
   con,
   cdmName = cdmName,
   cdmSchema = "main",
