@@ -5,7 +5,7 @@
 #' @param writeSchema A schema where the user has write access
 #' @return A con_df dataframe
 #' @export
-dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL){
+con_dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL){
   
   con_df <- cdm$drug_exposure |> 
     dplyr::inner_join(
@@ -24,15 +24,23 @@ dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL){
       tolower(concept_class_id) == "ingredient"
     ) |> 
     dplyr::transmute(
-      person_id = as.character(person_id),
+      person_id,
       drug_exposure_start_date,
       drug_concept_id,
       ancestor_concept_id,
       concept_name
+    ) |>
+    dplyr::collect()
+
+  con_df <- con_df |>
+    dplyr::mutate(
+      person_id = as.character(person_id),
+      drug_exposure_start_date = as.Date(drug_exposure_start_date)
     )
 
   return(con_df)
 }
+
 
 #' Generate a con_df dataframe without using CDMConnector
 #' @param connectionDetails A set of DatabaseConnector connectiondetails
@@ -44,8 +52,9 @@ dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL){
 #' @export
 getConDF <- function(connectionDetails, json, name, cdmSchema, writeSchema){
 
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  on.exit(DatabaseConnector::disconnect(connection), add = TRUE)
+  # conn <- attr(cdm, "dbcon")
+  conn <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
 
   cohortsToCreate <- CohortGenerator::createEmptyCohortDefinitionSet()
   cohortExpression <- CirceR::cohortExpressionFromJson(json)
@@ -108,7 +117,7 @@ stringDF_from_cdm <- function(con_df, validDrugs) {
   cli::cat_bullet("Filtering dataframe to valid drugs only...",
                   bullet_col = "yellow", bullet = "info")
 
-  con_df <- dplyr::collect(cond_df)
+  con_df <- dplyr::collect(con_df)
   con_df <- con_df[con_df$ancestor_concept_id %in% validDrugs$valid_concept_id,]
 
   cli::cat_bullet("Generating lag times and constructing drug record strings...",

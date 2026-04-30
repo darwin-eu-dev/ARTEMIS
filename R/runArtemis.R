@@ -13,7 +13,7 @@ runArtemis <- function(cdm, outputFolder = "Results"){
   # ===========================================================================
 
   if (!dir.exists(outputFolder)) {
-  dir.create(outputFolder, recursive = TRUE)
+    dir.create(outputFolder, recursive = TRUE)
   }
 
   logFile <- file.path(outputFolder, "log.txt")
@@ -24,6 +24,7 @@ runArtemis <- function(cdm, outputFolder = "Results"){
           log4r::file_appender(file = logFile)
       )
   )
+  on.exit(log4r::info(logger, "runArtemis finished"), add = TRUE)
 
   # Save CDM snapshot at the start (before any modifications)
   snap <- CDMConnector::snapshot(cdm)
@@ -69,7 +70,7 @@ runArtemis <- function(cdm, outputFolder = "Results"){
       overwrite = TRUE
   )
 
-  cohorts <- c("aml_cohort", "mm_cohort")
+  cohorts <- c("mm_cohort", "aml_cohort")
 
   # ===========================================================================
   # Step 2: Preprocessing
@@ -85,15 +86,21 @@ runArtemis <- function(cdm, outputFolder = "Results"){
  
   for (cohort in cohorts) {
     log4r::info(logger, sprintf("create con_df for %s", cohort))
-    df <- dfFromCDM(cdm, cohort)
+    df <- con_dfFromCDM(cdm, cohort)
+
+    cohort_rows <- nrow(df)
     
-    # check dates are correctly written
-    df <- df |> 
-      dplyr::mutate(
-        drug_exposure_start_date = as.POSIXct(df$drug_exposure_start_date,
-                                              origin = "1970-01-01",
-                                              tz = "UTC")
-      )
+    if (cohort_rows == 0){
+      log4r::info(logger, sprintf("%s is empty", cohort))
+      next
+    }
+
+    if (!inherits(df$drug_exposure_start_date, "Date")) {
+      df <- df |>
+        dplyr::mutate(
+          drug_exposure_start_date = as.Date(drug_exposure_start_date)
+        )
+    }
     con_dfs[[cohort]] <- df
 
     # Prepare a data.frame of patient drug records used in the alignment step
@@ -105,8 +112,8 @@ runArtemis <- function(cdm, outputFolder = "Results"){
   } 
 
   log4r::info(logger, "saving con_dfs, stringDFs")
-  saveRDS(con_dfs, "con_dfs.rds")
-  saveRDS(stringDFs, "stringDFs.rds")
+  saveRDS(con_dfs, file.path(outputFolder, "con_dfs.rds"))
+  saveRDS(stringDFs, file.path(outputFolder, "stringDFs.rds"))
 
   # ===========================================================================
   # Step 3: Alginment & post-processing
@@ -119,7 +126,14 @@ runArtemis <- function(cdm, outputFolder = "Results"){
   eras <- list()
   stats <- list()
 
-  for (cohort in cohorts) {
+  available_cohorts <- names(stringDFs)
+
+  if (length(available_cohorts) == 0) {
+    log4r::warn(logger, "No cohorts contained valid drug exposures; skipping alignment")
+    return(invisible(NULL))
+  }
+
+  for (cohort in available_cohorts) {
     log4r::info(logger, sprintf("run alginments for %s", cohort))
     outputs[[cohort]] <- stringDFs[[cohort]] |>
     generateRawAlignments(
@@ -129,32 +143,33 @@ runArtemis <- function(cdm, outputFolder = "Results"){
         method = "PropDiff",
         verbose = 0
     )
+    log4r::info(logger, "saving alignment output")
+    saveRDS(outputs, file.path(outputFolder,"outputs.rds"))
 
     ## Post-process 
     log4r::info(logger, sprintf("run postprocessing for %s", cohort))
     processed[[cohort]] <- outputs[[cohort]] |>
         processAlignments(regimens = regimens, 
                           regimenCombine = 28)
+    log4r::info(logger, "saving processed alignment output")
+    saveRDS(processed, file.path(outputFolder, "processed.rds"))
 
     log4r::info(logger, sprintf("get drug eras for %s", cohort))
     eras[[cohort]] <- processed[[cohort]] |> 
         calculateEras()
     
     log4r::info(logger, sprintf("get stats for %s", cohort))
-    stats[[cohort]] <- eras[[cohort]] |> 
-    generateRegimenStats()
+    # stats[[cohort]] <- eras[[cohort]] |> 
+    # generateRegimenStats()
   }
 
-  log4r::info(logger, "saving outputs & postprocessed")
-#   saveRDS(outputs, "outputs.rds")
-  saveRDS(processed, "processed.rds")
-  saveRDS(eras, "eras.rds")
-  saveRDS(stats, "stats.rds")
+  # saveRDS(eras, file.path(outputFolder, "eras.rds"))
+  # saveRDS(stats, file.path(outputFolder, "stats.rds"))
 
   # ===========================================================================
   # Step 4: Save outputs
   # ===========================================================================
 
-  log4r::info(logger, "Disconnecting from database")
-  CDMConnector::cdmDisconnect(cdm)
+  log4r::info(logger, "Leaving database connection open for caller-managed cleanup")
+  invisible(NULL)
 }
