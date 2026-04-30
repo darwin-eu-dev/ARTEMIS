@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfribidi-dev \
     libharfbuzz-dev \
     libpng-dev \
+    libpq-dev \
     libjpeg-dev \
     libtiff5-dev \
     zlib1g-dev \
@@ -46,6 +47,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN install2.r --error remotes
 RUN install2.r --error devtools
 RUN install2.r --error rJava
+RUN install2.r --error RPostgres
+
 
 RUN python -m pip install --no-cache-dir --break-system-packages \
     numpy \

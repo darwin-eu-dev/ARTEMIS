@@ -88,13 +88,16 @@ runArtemis <- function(cdm, outputFolder = "Results"){
     df <- dfFromCDM(cdm, cohort)
     
     # check dates are correctly written
-    df$drug_exposure_start_date <- as.POSIXct(df$drug_exposure_start_date,
+    df <- df |> 
+      dplyr::mutate(
+        drug_exposure_start_date = as.POSIXct(df$drug_exposure_start_date,
                                               origin = "1970-01-01",
                                               tz = "UTC")
+      )
     con_dfs[[cohort]] <- df
 
     # Prepare a data.frame of patient drug records used in the alignment step
-    stringDF <- stringDF_from_cdm(con_df = con_df,
+    stringDF <- stringDF_from_cdm(con_df = df,
                               validDrugs = validdrugs)
     
     log4r::info(logger, sprintf("create stringDF for %s", cohort))
@@ -143,7 +146,7 @@ runArtemis <- function(cdm, outputFolder = "Results"){
   }
 
   log4r::info(logger, "saving outputs & postprocessed")
-  saveRDS(outputs, "outputs.rds")
+#   saveRDS(outputs, "outputs.rds")
   saveRDS(processed, "processed.rds")
   saveRDS(eras, "eras.rds")
   saveRDS(stats, "stats.rds")

@@ -1,16 +1,29 @@
+#### TG ####
+
+TestGenerator::readPatients.xl(filePath = "mm_test.xlsx", 
+    testName = "MM",
+    outputPath = NULL,
+    cdmVersion = "5.4")
+
+cdm <- TestGenerator::patientsCDM(pathJson = NULL, 
+                                  testName = "MM",
+                                  cdmVersion = "5.4")
+
+
+####
+
 # Example script that walks through running ARTEMIS
 library(ARTEMIS)
 
-# Set Minimum cell count
-minCellCount <- 5
-
 # your dbname
-cdmName <- NULL
+cdmName <- "IPCI"
+cdmDatabaseSchema <- ""
+resultsDatabaseSchema <- ""
 
 # create your database connection here
 con <- DBI::dbConnect(
   RPostgres::Postgres(),
-  dbname = "...",
+  dbname = "...", # 
   host = "...",
   user = "...",
   password = "..."
@@ -20,7 +33,7 @@ con <- DBI::dbConnect(
 cdm <- CDMConnector::cdmFromCon(
   con,
   cdmName = cdmName,
-  cdmSchema = "main",
-  writeSchema = "main")
+  cdmSchema = cdmDatabaseSchema,
+  writeSchema = resultsDatabaseSchema)
 
 runArtemis(cdm, "Results")

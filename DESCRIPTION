@@ -32,7 +32,12 @@ Imports:
     methods,
     RColorBrewer,
     RPostgres,
-    viridisLite
+    viridisLite,
+    CDMConnector,
+    log4r,
+    omopgenerics,
+    odbc,
+    CodelistGenerator
 License: Apache License (>= 2)
 VignetteBuilder: knitr
 Encoding: UTF-8

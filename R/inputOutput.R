@@ -108,6 +108,7 @@ stringDF_from_cdm <- function(con_df, validDrugs) {
   cli::cat_bullet("Filtering dataframe to valid drugs only...",
                   bullet_col = "yellow", bullet = "info")
 
+  con_df <- dplyr::collect(cond_df)
   con_df <- con_df[con_df$ancestor_concept_id %in% validDrugs$valid_concept_id,]
 
   cli::cat_bullet("Generating lag times and constructing drug record strings...",
