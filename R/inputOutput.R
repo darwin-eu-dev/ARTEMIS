@@ -53,7 +53,7 @@ con_dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL)
 getConDF <- function(connectionDetails, json, name, cdmSchema, writeSchema){
 
   # conn <- attr(cdm, "dbcon")
-  conn <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
 
   cohortsToCreate <- CohortGenerator::createEmptyCohortDefinitionSet()
