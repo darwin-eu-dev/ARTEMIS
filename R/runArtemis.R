@@ -105,7 +105,8 @@ runArtemis <- function(
     cohort_rows <- nrow(df)
     
     if (cohort_rows == 0){
-      log4r::info(logger, sprintf("%s is empty", cohort))
+      log4r::info(logger, sprintf("%s is empty, removing from cohort list so further analysis is not run", cohort))
+      cohorts <- cohorts[cohorts != cohort]
       next
     }
 
