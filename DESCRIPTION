@@ -31,7 +31,8 @@ Imports:
     gridExtra,
     methods,
     RColorBrewer,
-    RPostgres
+    RPostgres,
+    viridisLite
 License: Apache License (>= 2)
 VignetteBuilder: knitr
 Encoding: UTF-8
