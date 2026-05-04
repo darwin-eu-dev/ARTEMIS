@@ -141,14 +141,12 @@ runArtemis <- function(
   eras <- list()
   stats <- list()
 
-  available_cohorts <- names(stringDFs)
-
-  if (length(available_cohorts) == 0) {
+  if (length(names(stringDFs)) == 0) {
     log4r::warn(logger, "No cohorts contained valid drug exposures; skipping alignment")
     return(invisible(NULL))
   }
 
-  for (cohort in available_cohorts) {
+  for (cohort in names(stringDFs)) {
     log4r::info(logger, sprintf("run alginments for %s", cohort))
     outputs[[cohort]] <- stringDFs[[cohort]] |>
     generateRawAlignments(
