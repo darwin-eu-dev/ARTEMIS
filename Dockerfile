@@ -48,6 +48,7 @@ RUN install2.r --error remotes
 RUN install2.r --error devtools
 RUN install2.r --error rJava
 RUN install2.r --error RPostgres
+RUN install2.r --error odbc DBI
 
 
 RUN python -m pip install --no-cache-dir --break-system-packages \
