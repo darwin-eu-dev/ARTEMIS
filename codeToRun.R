@@ -24,7 +24,7 @@ resultsDatabaseSchema <- ""
 # create your database connection here
 con <- DBI::dbConnect(
   RPostgres::Postgres(),
-  dbname = "...", # 
+  dbname = "...", 
   host = "...",
   user = "...",
   password = "..."

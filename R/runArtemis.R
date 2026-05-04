@@ -6,7 +6,12 @@
 #' @return NULL (invisibly). Results are written to `outputFolder`.
 #' 
 #' @export
-runArtemis <- function(cdm, outputFolder = "Results"){
+runArtemis <- function(
+  cdm, 
+  outputFolder = "Results",
+  runMM = FALSE,
+  runAML = TRUE  
+){
 
   # ===========================================================================
   # Step 0: Setup — logger, version, database detection
@@ -35,42 +40,51 @@ runArtemis <- function(cdm, outputFolder = "Results"){
   # Step 1: Create Cohorts
   # ===========================================================================
 
-  log4r::info(logger, "[Step 1] Creating cohorts (MM, AML)")
+  log4r::info(logger, "[Step 1] Creating cohorts")
+  cohorts <- c()
 
-  # MM cohort from ConceptSet json
-  mm_codes <- omopgenerics::importConceptSetExpression(
-      path = system.file("cohorts", "mm_narrow.json", package = "ARTEMIS")
-  ) |> CodelistGenerator::asCodelist(cdm = cdm)
-  mm_codes <- unlist(mm_codes)
+  if (runMM) {
+    # MM cohort from ConceptSet json
+    log4r::info(logger, "Generate MM cohort from concept sets")
+    cohorts <- c(cohorts, "mm_cohort")
 
-  log4r::info(logger, "Generate MM cohort from concept sets")
-  cdm <- CDMConnector::generateConceptCohortSet(
-      cdm = cdm,
-      conceptSet = list(
-          "mm_cohort_1" = mm_codes
-      ),
-      end = "observation_period_end_date",
-      limit = "first",
-      name = "mm_cohort",
-      overwrite = TRUE
-  )
+    mm_codes <- omopgenerics::importConceptSetExpression(
+        path = system.file("cohorts", "mm_narrow.json", package = "ARTEMIS")
+    ) |> CodelistGenerator::asCodelist(cdm = cdm)
+    mm_codes <- unlist(mm_codes)
 
+    cdm <- CDMConnector::generateConceptCohortSet(
+        cdm = cdm,
+        conceptSet = list(
+            "mm_cohort" = mm_codes
+        ),
+        end = "observation_period_end_date",
+        limit = "first",
+        name = "mm_cohort",
+        overwrite = TRUE
+    )
+    
+    # log cohort size
+  }
 
-  # AML cohort from is a CohortSet json
-  aml_cohort <- CDMConnector::readCohortSet(
-    path = system.file("cohorts", "aml.json", package = "ARTEMIS")
-  )
+  if (runAML) {
+    # AML cohort from is a CohortSet json
+    log4r::info(logger, "Generate AML cohort from sohortSet")
 
-  log4r::info(logger, "Generate AML cohort from sohortSet")
-  cdm <- CDMConnector::generateCohortSet(
-      cdm = cdm,
-      cohortSet = aml_cohort,
-      name = "aml_cohort",
-      computeAttrition = TRUE,
-      overwrite = TRUE
-  )
+    cohorts <- c(cohorts, "aml_cohort")
+    aml_cohort <- CDMConnector::readCohortSet(
+      path = system.file("cohorts", "aml.json", package = "ARTEMIS")
+    )
 
-  cohorts <- c("mm_cohort", "aml_cohort")
+    cdm <- CDMConnector::generateCohortSet(
+        cdm = cdm,
+        cohortSet = aml_cohort,
+        name = "aml_cohort",
+        computeAttrition = TRUE,
+        overwrite = TRUE
+    )
+  }
+
 
   # ===========================================================================
   # Step 2: Preprocessing
