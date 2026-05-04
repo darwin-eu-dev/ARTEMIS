@@ -67,6 +67,21 @@ generateRawAlignments <- function(stringDF,
     output = output$to_dict(orient = "list") |> 
       reticulate::py_to_r() |> 
       as.data.frame()
+  
+    output <- tryCatch({
+        if (!is.null(output) && !inherits(output, "try-error") && nrow(output) == 0) {
+            return(data.frame())
+        }
+        output
+        }, error = function(e) {
+
+        # FALLBACK: convert from python object
+        output <- output$to_dict(orient = "list") |>
+            reticulate::py_to_r() |>
+            as.data.frame()
+
+        output
+        })
 
     if (nrow(output) == 0) {
         cli::cat_bullet(
