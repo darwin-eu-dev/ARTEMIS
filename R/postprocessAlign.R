@@ -179,6 +179,10 @@ combineOverlaps <- function(df, regimenCombine) {
               drugRec_End   = max(drugRec_End),
               t_start       = min(t_start),
               t_end         = max(t_end),
+              regCode       = dplyr::first(regCode),
+              cohort_start_date = dplyr::first(cohort_start_date),
+              cohort_end_date = dplyr::first(cohort_end_date),
+              first_drug_exposure_day = dplyr::first(first_drug_exposure_day),
               adjustedS     = mean(adjustedS),
               Score         = mean(Score),
               totAlign      = sum(totAlign)

@@ -162,6 +162,191 @@ plotAlignment <- function(pa, known_drugs = NULL) {
 }
 
 
+#' Plot alignment output relative to cohort start
+#'
+#' For each patient separately, plot drug exposures and aligned regimens on an
+#' x-axis where cohort start is day 0. A vertical line indicates cohort start
+#' and another indicates cohort end.
+#' @param pa A patient alignment dataframe created by processAlignments() or calculateEras
+#' @return plot - A list of ggplot objects
+#' @export
+#' @importFrom ggplot2 ggplot aes geom_segment geom_text geom_point facet_grid geom_vline
+#' @importFrom ggplot2 scale_color_manual guides labs theme_bw theme ggtitle scale_y_discrete
+#' @importFrom ggplot2 guide_legend scale_linetype_manual
+#' @importFrom ggtext element_markdown
+#' @importFrom dplyr filter select distinct arrange mutate bind_rows group_by arrange vars summarise
+#' @importFrom forcats fct_reorder
+#' @importFrom tidyr separate_rows separate
+#' @importFrom RColorBrewer brewer.pal
+plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
+  required_cols <- c("cohort_start_date", "cohort_end_date", "first_drug_exposure_day")
+  missing_cols <- required_cols[!required_cols %in% names(pa)]
+  if (length(missing_cols) > 0) {
+    stop(
+      "plotAlignmentByCohort() requires columns: ",
+      paste(required_cols, collapse = ", "),
+      ". Missing: ",
+      paste(missing_cols, collapse = ", ")
+    )
+  }
+
+  if(!"patient_name" %in% names(pa)) {
+      pa$patient_name = pa$personID
+  }
+
+  patients = unique(pa$patient_name)
+
+  if (length(patients) > 1) {
+    cli::cat_bullet(
+            paste("Multiple patients detected", sep = ""),
+            bullet_col = "yellow",
+            bullet = "info"
+        )
+    p_plots = list()
+    for (p in patients) {
+      p_pa <- pa %>%
+          filter(patient_name == p)
+      p_plot <- plotAlignmentByCohort(p_pa, known_drugs = known_drugs)
+      p_plots[[as.character(p)]] = p_plot
+    }
+    return(p_plots)
+  }
+
+  pa = pa %>%
+      filter(patient_name == patients[1])
+
+  if (!all(c("t_start","t_end") %in% names(pa))) {
+    drugRec <- encode(pa$DrugRecord_full[1])
+    drugDF <- createDrugDF(drugRec)
+    pa <- add_cumultive_times_to_df(pa, drugDF)
+    pa$component <- pa$regName
+  }
+
+  first_drug_day <- unique(pa$first_drug_exposure_day)[1]
+  cohort_end_day <- as.numeric(unique(pa$cohort_end_date)[1] - unique(pa$cohort_start_date)[1])
+
+  df_drugs <- pa %>%
+      select(person_id = personID, seq = DrugRecord_full) %>%
+      distinct() %>%
+      separate_rows(seq, sep = ";") %>%
+      filter(seq != "") %>%
+      separate(seq, into = c("time", "component")) %>%
+      group_by(person_id) %>%
+      mutate(
+          t_start = cumsum(as.integer(time)),
+          t_end = t_start,
+          plot_start = t_start + first_drug_day,
+          plot_end = t_end + first_drug_day,
+          case = "drugs",
+          person_id = as.character(person_id)
+      ) %>%
+      arrange(time)
+
+  df <- pa %>%
+      select(
+          person_id = personID,
+          patient_name,
+          component,
+          t_start,
+          t_end,
+          adjustedS
+      ) %>%
+      mutate(
+          t_end = ifelse(t_start == t_end, t_end + 1, t_end),
+          plot_start = t_start + first_drug_day,
+          plot_end = t_end + first_drug_day,
+          case = "regimen",
+          adjustedS = round(adjustedS, 2)
+      ) %>%
+      bind_rows(df_drugs) %>%
+      mutate(component = fct_reorder(component, plot_start))
+
+  patient_components <- unique(df$component[df$case == "drugs"])
+  regimen_components <- unique(df$component[df$case == "regimen"])
+
+  patient_components = as.character(patient_components)
+  regimen_components = as.character(regimen_components)
+  if(length(patient_components) < 10) {
+      patient_colors <- setNames(brewer.pal(length(patient_components), "Set1"), patient_components)
+  } else {
+      patient_colors <- setNames(viridis(length(patient_components), option = "D"), patient_components)
+  }
+  regimen_colors <- setNames(brewer.pal(length(regimen_components), "Paired"), regimen_components)
+  colors <- c(patient_colors, regimen_colors)
+  df$patient_components_col <- ifelse(df$case == "drugs", as.character(df$component), NA)
+  df$regimen_components_col <- ifelse(df$case == "regimen", as.character(df$component), NA)
+  df$mid_x <- (df$plot_start + df$plot_end) / 2
+
+  cohort_lines <- data.frame(
+      xintercept = c(0, cohort_end_day),
+      marker = c("Cohort start", "Cohort end")
+  )
+
+  p <- df %>%
+      ggplot() +
+      geom_vline(
+          data = cohort_lines,
+          aes(xintercept = xintercept, linetype = marker),
+          color = "grey30",
+          linewidth = 0.6
+      ) +
+      geom_segment(
+          aes(
+              x = plot_start,
+              xend = plot_end,
+              y = component,
+              yend = component,
+              color = patient_components_col
+          ),
+          linewidth = 2,
+          na.rm = TRUE
+      ) +
+      geom_segment(
+          aes(
+              x = plot_start,
+              xend = plot_end,
+              y = component,
+              yend = component,
+              color = regimen_components_col
+          ),
+          linewidth = 2,
+          na.rm = TRUE
+      ) +
+      geom_text(aes(x = mid_x, y = component, label = adjustedS), vjust = -0.5, size = 3) +
+      geom_point(aes(x = plot_start, y = component, color = patient_components_col)) +
+      facet_grid(
+          cols = vars(person_id),
+          rows = vars(case),
+          scale = "free_y"
+      ) +
+      scale_color_manual(
+          name = "patient",
+          values = colors,
+          na.translate = FALSE,
+          guide = guide_legend(order = 1)
+      ) +
+      scale_linetype_manual(values = c("Cohort start" = "dashed", "Cohort end" = "dotted")) +
+      guides(color = guide_legend(order = 3, override.aes = list(size = 3))) +
+      labs(
+          x = "Days Relative to Cohort Start",
+          y = "Component",
+          title = "Time Intervals per Component"
+      ) +
+      theme_bw() +
+      theme(
+          legend.position = "none",
+          axis.text.y = element_markdown()
+      ) +
+      ggtitle(label = paste("Patient", unique(df$patient_name))) +
+      scale_y_discrete(labels = function(x) {
+          ifelse(!x %in% known_drugs & !x %in% df$component,
+                paste0("**", x, "**"), x)
+      })
+
+  return(p)
+}
+
+
 #' Adjusted Score distribution plot
 #' 
 #' Plot histogram and density of adjusted scores for regimens, or top regimens by frequency

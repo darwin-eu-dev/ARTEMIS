@@ -31,6 +31,7 @@ NULL
 #' is not used in select() and unnest(), thus leading to these warnings
 #' being erroneously generated
 regName <- NULL
+regCode <- NULL
 Score <- NULL
 drugRec_Start <- NULL
 drugRec_End <- NULL
@@ -42,6 +43,10 @@ t_end <- NULL
 regimen <- NULL
 component <- NULL
 person_id <- NULL
+cohort_start_date <- NULL
+cohort_end_date <- NULL
+first_drug_exposure_day <- NULL
+drug_exposure_day_relative <- NULL
 
 #' Python Utility Installs
 #' Ensures relevant python libraries are installed
@@ -64,4 +69,25 @@ progress <- function (x, max = 100) {
               max))
   if (x == max)
     cat('\n')
+}
+
+#' Normalize dates
+#' @param x Column containing dates
+#' @param tz Optional. Timezone
+#' 
+#' @export
+normalize_date <- function(x, tz = "UTC") {
+  if (inherits(x, "Date")) {
+    return(x)
+  }
+
+  if (inherits(x, "POSIXct")) {
+    return(as.Date(x, tz = tz))
+  }
+
+  if (is.numeric(x)) {
+    return(as.Date(as.POSIXct(x, origin = "1970-01-01", tz = tz), tz = tz))
+  }
+
+  as.Date(x, tz = tz)
 }

@@ -25,6 +25,8 @@ con_dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL)
     ) |> 
     dplyr::transmute(
       person_id,
+      cohort_start_date,
+      cohort_end_date,
       drug_exposure_start_date,
       drug_concept_id,
       ancestor_concept_id,
@@ -35,7 +37,12 @@ con_dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL)
   con_df <- con_df |>
     dplyr::mutate(
       person_id = as.character(person_id),
-      drug_exposure_start_date = as.Date(drug_exposure_start_date)
+      cohort_start_date = normalize_date(cohort_start_date),
+      cohort_end_date = normalize_date(cohort_end_date),
+      drug_exposure_start_date = normalize_date(drug_exposure_start_date)
+    ) |>
+    dplyr::mutate(
+      drug_exposure_day_relative = as.numeric(drug_exposure_start_date - cohort_start_date)
     )
 
   return(con_df)
@@ -52,9 +59,8 @@ con_dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL)
 #' @export
 getConDF <- function(connectionDetails, json, name, cdmSchema, writeSchema){
 
-  # conn <- attr(cdm, "dbcon")
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
+  on.exit(DatabaseConnector::disconnect(connection), add = TRUE)
 
   cohortsToCreate <- CohortGenerator::createEmptyCohortDefinitionSet()
   cohortExpression <- CirceR::cohortExpressionFromJson(json)
@@ -79,6 +85,8 @@ getConDF <- function(connectionDetails, json, name, cdmSchema, writeSchema){
   sql_template <- "
 WITH filtered_drug_exposure AS (
   SELECT CAST(drug_exposure.person_id AS VARCHAR) AS person_id,
+         ch.cohort_start_date,
+         ch.cohort_end_date,
          drug_exposure.drug_exposure_start_date,
          drug_exposure.drug_concept_id,
          concept_ancestor.ancestor_concept_id,
@@ -98,7 +106,15 @@ SELECT * FROM filtered_drug_exposure;
   con_df <- DatabaseConnector::dbGetQuery(conn = connection,
                                         statement = rendered_sql)
 
-  con_df <- as.data.frame(con_df)
+  con_df <- as.data.frame(con_df) |>
+    dplyr::mutate(
+      cohort_start_date = normalize_date(cohort_start_date),
+      cohort_end_date = normalize_date(cohort_end_date),
+      drug_exposure_start_date = normalize_date(drug_exposure_start_date)
+    ) |>
+    dplyr::mutate(
+      drug_exposure_day_relative = as.numeric(drug_exposure_start_date - cohort_start_date)
+    )
 
   message(paste(nrow(con_df), " subjects with a drug exposure found"))
 
@@ -139,7 +155,12 @@ stringDF_from_cdm <- function(con_df, validDrugs) {
 
   con_df_out2 <- con_df_out  %>%
     dplyr::group_by(.data$person_id) %>%
-    dplyr::summarise(seq = paste(.data$dayTaken2, ".",.data$concept_name, ";", collapse = "", sep = ""))
+    dplyr::summarise(
+      cohort_start_date = dplyr::first(.data$cohort_start_date),
+      cohort_end_date = dplyr::first(.data$cohort_end_date),
+      first_drug_exposure_day = min(.data$drug_exposure_day_relative, na.rm = TRUE),
+      seq = paste(.data$dayTaken2, ".",.data$concept_name, ";", collapse = "", sep = "")
+    )
 
   con_df_out2$seq <- gsub(" ","",gsub(",","_",con_df_out2$seq))
 

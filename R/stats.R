@@ -8,6 +8,9 @@
 generateRegimenStats <- function(processedEras) {
     processedEras$t_total <- (processedEras$t_end - processedEras$t_start) +
         1
+
+    regCodes <- processedEras %>%
+        dplyr::distinct(component, regCode)
     
     meanScores <- aggregate(adjustedS ~ component, processedEras, mean)
     medianScores <- aggregate(adjustedS ~ component, processedEras, median)
@@ -59,8 +62,10 @@ generateRegimenStats <- function(processedEras) {
         otherLikelihood,
         by = "component"
     ), count, by = "component"), frequency, by = "component")
+    aggregated_Processed_Data <- merge(regCodes, aggregated_Processed_Data, by = "component")
     colnames(aggregated_Processed_Data) <- c(
         "regName",
+        "regCode",
         "Mean Score",
         "Median Score",
         "Score Range",

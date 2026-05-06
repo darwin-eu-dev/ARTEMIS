@@ -57,6 +57,9 @@ generateRawAlignments <- function(stringDF,
         stop(paste0("Error: ", obj_name, 
                     " is empty. No patient records found."))
     }
+    patient_meta_cols <- c("cohort_start_date", "cohort_end_date", "first_drug_exposure_day")
+    patient_meta_cols <- patient_meta_cols[patient_meta_cols %in% colnames(stringDF)]
+
     if (!exists("align_patients_regimens", mode = "function")) {
         py_functions = reticulate::import_from_path("main", path = system.file("python", package = "ARTEMIS"))
         align_patients_regimens = py_functions$align_patients_regimens
@@ -102,6 +105,15 @@ generateRawAlignments <- function(stringDF,
     output <- output %>%
         dplyr::filter(!is.na(adjustedS) & !is.na(totAlign)) %>%
         dplyr::filter(totAlign > 0 & adjustedS > 0)
+
+    if (length(patient_meta_cols) > 0) {
+        cohort_lookup <- stringDF %>%
+            dplyr::select(person_id, dplyr::all_of(patient_meta_cols)) %>%
+            dplyr::distinct()
+
+        output <- output %>%
+            dplyr::left_join(cohort_lookup, by = c("personID" = "person_id"))
+    }
     
     return(output)
 }

@@ -80,6 +80,10 @@ calculateEras_one <- function(pa, discontinuationTime = 120) {
     pa <- pa %>%
         dplyr::mutate(eras = cumsum(same_era == "N")) %>%
         dplyr::summarise(
+            regCode = dplyr::first(regCode),
+            cohort_start_date = dplyr::first(cohort_start_date),
+            cohort_end_date = dplyr::first(cohort_end_date),
+            first_drug_exposure_day = dplyr::first(first_drug_exposure_day),
             adjustedS = sum(adjustedS * (t_end - t_start) / max(sum(t_end - t_start), 1)), # avoid division by zero
             t_start = min(t_start),
             t_end = max(t_end),
