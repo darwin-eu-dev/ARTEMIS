@@ -1,3 +1,26 @@
+# ################################################################
+# # Test
+# ################################################################
+# TestGenerator::readPatients.xl(filePath = "mm_test.xlsx", 
+#     testName = "MM",
+#     outputPath = NULL,
+#     cdmVersion = "5.4")
+
+# cdm <- TestGenerator::patientsCDM(pathJson = NULL, 
+#                                   testName = "AML",
+#                                   cdmVersion = "5.4")
+
+# runArtemis(cdm, 
+#   "Results_AML",
+#   runMM = FALSE,
+#   runAML = TRUE,
+#   generateReportOutput = TRUE,
+#   reportExamples = 5,
+#   renderReport = TRUE
+
+# )
+# ################################################################
+
 library(dplyr)
 library(CDMConnector)
 library(ARTEMIS)

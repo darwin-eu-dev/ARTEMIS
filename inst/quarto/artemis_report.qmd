@@ -59,10 +59,10 @@ cohort_summary_table <- function(con_df, processed_df) {
       "Distinct regimens detected"
     ),
     Value = c(
-      n_cohort,
-      n_with_regimen,
+      round(n_cohort, 0),
+      round(n_with_regimen, 0),
       round(n_with_regimen / max(n_cohort, 1), 3),
-      if (nrow(processed_df) == 0) 0 else dplyr::n_distinct(processed_df$component)
+      if (nrow(processed_df) == 0) 0 else round(dplyr::n_distinct(processed_df$component), 0)
     )
   )
 }
@@ -173,7 +173,6 @@ for (cohort in cohorts) {
     next
   }
 
-  cat("### ", cohort, "\n\n", sep = "")
   for (id in ids) {
     cat("#### Subject ", id, "\n\n", sep = "")
     print(plotAlignmentByCohort(dplyr::filter(era_df, personID == id)))

@@ -162,16 +162,12 @@ runArtemis <- function(
         method = "PropDiff",
         verbose = 0
     )
-    log4r::info(logger, "saving alignment output")
-    saveRDS(outputs, file.path(outputFolder,"outputs.rds"))
 
     ## Post-process 
     log4r::info(logger, sprintf("run postprocessing for %s", cohort))
     processed[[cohort]] <- outputs[[cohort]] |>
         processAlignments(regimens = regimens, 
                           regimenCombine = 28)
-    log4r::info(logger, "saving processed alignment output")
-    saveRDS(processed, file.path(outputFolder, "processed.rds"))
 
     log4r::info(logger, sprintf("get drug eras for %s", cohort))
     eras[[cohort]] <- processed[[cohort]] |> 
@@ -182,12 +178,14 @@ runArtemis <- function(
       generateRegimenStats()
   }
 
+  # ===========================================================================
+  # Step 4: Save outputs & generate report
+  # ===========================================================================
+
+  saveRDS(outputs, file.path(outputFolder,"outputs.rds"))
+  saveRDS(processed, file.path(outputFolder, "processed.rds"))
   saveRDS(eras, file.path(outputFolder, "eras.rds"))
   saveRDS(stats, file.path(outputFolder, "stats.rds"))
-
-  # ===========================================================================
-  # Step 4: Save outputs
-  # ===========================================================================
 
   if (generateReportOutput) {
     log4r::info(logger, "Generating ARTEMIS report")

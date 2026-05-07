@@ -1,36 +1,13 @@
-################################################################
-# Test
-################################################################
-TestGenerator::readPatients.xl(filePath = "mm_test.xlsx", 
-    testName = "MM",
-    outputPath = NULL,
-    cdmVersion = "5.4")
-
-cdm <- TestGenerator::patientsCDM(pathJson = NULL, 
-                                  testName = "AML",
-                                  cdmVersion = "5.4")
-
-runArtemis(cdm, 
-  "Results_AML",
-  runMM = FALSE,
-  runAML = TRUE,
-  generateReportOutput = TRUE,
-  reportExamples = 5,
-  renderReport = TRUE
-
-)
-################################################################
-
-# Example script that walks through running ARTEMIS
+# Script that walks through running ARTEMIS
 library(ARTEMIS)
 
-# your dbname
-cdmName <- "IPCI"
+# Fill in your db details below
+cdmName <- ""
 cdmDatabaseSchema <- ""
 resultsDatabaseSchema <- ""
 
 # create your database connection here
-con <- DBI::dbConnect(
+conn <- DBI::dbConnect(
   RPostgres::Postgres(),
   dbname = "...", 
   host = "...",
@@ -40,9 +17,9 @@ con <- DBI::dbConnect(
 
 # Create the CDM object
 cdm <- CDMConnector::cdmFromCon(
-  con,
+  conn,
   cdmName = cdmName,
   cdmSchema = cdmDatabaseSchema,
   writeSchema = resultsDatabaseSchema)
 
-runArtemis(cdm, "Results")
+runArtemis(cdm, "Results", runAML = TRUE, runMM = FALSE, generateReportOutput = TRUE)

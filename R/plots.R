@@ -205,7 +205,7 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
     p_plots = list()
     for (p in patients) {
       p_pa <- pa %>%
-          filter(patient_name == p)
+          dplyr::filter(patient_name == p)
       p_plot <- plotAlignmentByCohort(p_pa, known_drugs = known_drugs)
       p_plots[[as.character(p)]] = p_plot
     }
@@ -213,7 +213,7 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
   }
 
   pa = pa %>%
-      filter(patient_name == patients[1])
+      dplyr::filter(patient_name == patients[1])
 
   if (!all(c("t_start","t_end") %in% names(pa))) {
     drugRec <- encode(pa$DrugRecord_full[1])
@@ -226,13 +226,13 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
   cohort_end_day <- as.numeric(unique(pa$cohort_end_date)[1] - unique(pa$cohort_start_date)[1])
 
   df_drugs <- pa %>%
-      select(person_id = personID, seq = DrugRecord_full) %>%
-      distinct() %>%
-      separate_rows(seq, sep = ";") %>%
-      filter(seq != "") %>%
-      separate(seq, into = c("time", "component")) %>%
-      group_by(person_id) %>%
-      mutate(
+      dplyr::select(person_id = personID, seq = DrugRecord_full) %>%
+      dplyr::distinct() %>%
+      tidyr::separate_rows(seq, sep = ";") %>%
+      dplyr::filter(seq != "") %>%
+      tidyr::separate(seq, into = c("time", "component")) %>%
+      dplyr::group_by(person_id) %>%
+      dplyr::mutate(
           t_start = cumsum(as.integer(time)),
           t_end = t_start,
           plot_start = t_start + first_drug_day,
@@ -240,10 +240,10 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
           case = "drugs",
           person_id = as.character(person_id)
       ) %>%
-      arrange(time)
+      dplyr::arrange(time)
 
   df <- pa %>%
-      select(
+      dplyr::select(
           person_id = personID,
           patient_name,
           component,
@@ -251,15 +251,15 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
           t_end,
           adjustedS
       ) %>%
-      mutate(
+      dplyr::mutate(
           t_end = ifelse(t_start == t_end, t_end + 1, t_end),
           plot_start = t_start + first_drug_day,
           plot_end = t_end + first_drug_day,
           case = "regimen",
           adjustedS = round(adjustedS, 2)
       ) %>%
-      bind_rows(df_drugs) %>%
-      mutate(component = fct_reorder(component, plot_start))
+      dplyr::bind_rows(df_drugs) %>%
+      dplyr::mutate(component = forcats::fct_reorder(component, plot_start))
 
   patient_components <- unique(df$component[df$case == "drugs"])
   regimen_components <- unique(df$component[df$case == "regimen"])
@@ -267,11 +267,11 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
   patient_components = as.character(patient_components)
   regimen_components = as.character(regimen_components)
   if(length(patient_components) < 10) {
-      patient_colors <- setNames(brewer.pal(length(patient_components), "Set1"), patient_components)
+      patient_colors <- setNames(RColorBrewer::brewer.pal(length(patient_components), "Set1"), patient_components)
   } else {
-      patient_colors <- setNames(viridis(length(patient_components), option = "D"), patient_components)
+      patient_colors <- setNames(viridisLite::viridis(length(patient_components), option = "D"), patient_components)
   }
-  regimen_colors <- setNames(brewer.pal(length(regimen_components), "Paired"), regimen_components)
+  regimen_colors <- setNames(RColorBrewer::brewer.pal(length(regimen_components), "Paired"), regimen_components)
   colors <- c(patient_colors, regimen_colors)
   df$patient_components_col <- ifelse(df$case == "drugs", as.character(df$component), NA)
   df$regimen_components_col <- ifelse(df$case == "regimen", as.character(df$component), NA)
@@ -283,15 +283,15 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
   )
 
   p <- df %>%
-      ggplot() +
-      geom_vline(
+      ggplot2::ggplot() +
+      ggplot2::geom_vline(
           data = cohort_lines,
-          aes(xintercept = xintercept, linetype = marker),
+          ggplot2::aes(xintercept = xintercept, linetype = marker),
           color = "grey30",
           linewidth = 0.6
       ) +
-      geom_segment(
-          aes(
+      ggplot2::geom_segment(
+          ggplot2::aes(
               x = plot_start,
               xend = plot_end,
               y = component,
@@ -301,8 +301,8 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
           linewidth = 2,
           na.rm = TRUE
       ) +
-      geom_segment(
-          aes(
+      ggplot2::geom_segment(
+          ggplot2::aes(
               x = plot_start,
               xend = plot_end,
               y = component,
@@ -312,33 +312,33 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
           linewidth = 2,
           na.rm = TRUE
       ) +
-      geom_text(aes(x = mid_x, y = component, label = adjustedS), vjust = -0.5, size = 3) +
-      geom_point(aes(x = plot_start, y = component, color = patient_components_col)) +
-      facet_grid(
-          cols = vars(person_id),
-          rows = vars(case),
+      ggplot2::geom_text(ggplot2::aes(x = mid_x, y = component, label = adjustedS), vjust = -0.5, size = 3) +
+      ggplot2::geom_point(ggplot2::aes(x = plot_start, y = component, color = patient_components_col)) +
+      ggplot2::facet_grid(
+          cols = dplyr::vars(person_id),
+          rows = dplyr::vars(case),
           scale = "free_y"
       ) +
-      scale_color_manual(
+      ggplot2::scale_color_manual(
           name = "patient",
           values = colors,
           na.translate = FALSE,
-          guide = guide_legend(order = 1)
+          guide = ggplot2::guide_legend(order = 1)
       ) +
-      scale_linetype_manual(values = c("Cohort start" = "dashed", "Cohort end" = "dotted")) +
-      guides(color = guide_legend(order = 3, override.aes = list(size = 3))) +
-      labs(
+      ggplot2::scale_linetype_manual(values = c("Cohort start" = "dashed", "Cohort end" = "dotted")) +
+      ggplot2::guides(color = ggplot2::guide_legend(order = 3, override.aes = list(size = 3))) +
+      ggplot2::labs(
           x = "Days Relative to Cohort Start",
           y = "Component",
           title = "Time Intervals per Component"
       ) +
-      theme_bw() +
-      theme(
+      ggplot2::theme_bw() +
+      ggplot2::theme(
           legend.position = "none",
-          axis.text.y = element_markdown()
+          axis.text.y = ggtext::element_markdown()
       ) +
-      ggtitle(label = paste("Patient", unique(df$patient_name))) +
-      scale_y_discrete(labels = function(x) {
+      ggplot2::ggtitle(label = paste("Patient", unique(df$patient_name))) +
+      ggplot2::scale_y_discrete(labels = function(x) {
           ifelse(!x %in% known_drugs & !x %in% df$component,
                 paste0("**", x, "**"), x)
       })

@@ -9,7 +9,7 @@
 #' @export
 generateReport <- function(
   outputFolder = "Results",
-  nExamples = 5,
+  nExamples = 15,
   render = TRUE,
   reportFile = "artemis_report.qmd",
   outputFile = "artemis_report.html"

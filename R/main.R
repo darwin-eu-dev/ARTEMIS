@@ -66,10 +66,6 @@ generateRawAlignments <- function(stringDF,
     }
 
     output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, method=method)
-
-    output = output$to_dict(orient = "list") |> 
-      reticulate::py_to_r() |> 
-      as.data.frame()
   
     output <- tryCatch({
         if (!is.null(output) && !inherits(output, "try-error") && nrow(output) == 0) {

@@ -77,7 +77,7 @@ pa <- processedAll %>%
 ## Data analysis
 ## Plot alignments for every patient 
 
-p <- plotAlignment(pa)
+p <- plotAlignmentByCohort(pa)
 # check graphs
 p
 
