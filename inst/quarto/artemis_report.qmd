@@ -1,0 +1,183 @@
+---
+title: "ARTEMIS Report"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+execute:
+  echo: false
+  warning: false
+  message: false
+params:
+  output_folder: "."
+  n_examples: 5
+---
+
+## Setup
+
+```{r}
+library(ARTEMIS)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(stringr)
+
+report_dir <- tryCatch(
+  dirname(knitr::current_input(dir = TRUE)),
+  error = function(e) getwd()
+)
+
+if (!exists("params")) {
+  params <- list(output_folder = report_dir, n_examples = 5)
+}
+
+output_folder <- params$output_folder
+if (is.null(output_folder) || identical(output_folder, ".") || !nzchar(output_folder)) {
+  output_folder <- report_dir
+}
+if (!grepl("^(/|[A-Za-z]:[/\\\\])", output_folder)) {
+  output_folder <- file.path(report_dir, output_folder)
+}
+output_folder <- normalizePath(output_folder, winslash = "/", mustWork = TRUE)
+n_examples <- params$n_examples
+
+con_dfs <- readRDS(file.path(output_folder, "con_dfs.rds"))
+processed <- readRDS(file.path(output_folder, "processed.rds"))
+eras <- readRDS(file.path(output_folder, "eras.rds"))
+stats_path <- file.path(output_folder, "stats.rds")
+stats <- if (file.exists(stats_path)) readRDS(stats_path) else list()
+
+cohort_summary_table <- function(con_df, processed_df) {
+  n_cohort <- dplyr::n_distinct(con_df$person_id)
+  n_with_regimen <- if (nrow(processed_df) == 0) 0 else dplyr::n_distinct(processed_df$personID)
+
+  data.frame(
+    Metric = c(
+      "People in cohort",
+      "People with >=1 detected regimen",
+      "Proportion with >=1 detected regimen",
+      "Distinct regimens detected"
+    ),
+    Value = c(
+      n_cohort,
+      n_with_regimen,
+      round(n_with_regimen / max(n_cohort, 1), 3),
+      if (nrow(processed_df) == 0) 0 else dplyr::n_distinct(processed_df$component)
+    )
+  )
+}
+
+regimens_per_person_plot <- function(processed_df) {
+  counts <- processed_df %>%
+    dplyr::count(personID, name = "n_regimens")
+
+  ggplot(counts, aes(x = n_regimens)) +
+    geom_histogram(
+      binwidth = 1,
+      boundary = 0,
+      closed = "left",
+      fill = "#33658A",
+      color = "white"
+    ) +
+    labs(
+      x = "Detected regimens per person",
+      y = "Number of people",
+      title = "Regimens per person"
+    ) +
+    theme_minimal()
+}
+
+first_drug_offset_plot <- function(era_df) {
+  offsets <- era_df %>%
+    dplyr::distinct(personID, first_drug_exposure_day)
+
+  ggplot(offsets, aes(x = first_drug_exposure_day)) +
+    geom_histogram(binwidth = 7, fill = "#F26419", color = "white") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "grey30") +
+    labs(
+      x = "First drug exposure day relative to cohort start",
+      y = "Number of people",
+      title = "First drug exposure timing"
+    ) +
+    theme_minimal()
+}
+
+example_subject_ids <- function(pa, n_examples) {
+  pa %>%
+    dplyr::distinct(personID, DrugRecord_full) %>%
+    dplyr::mutate(drug_record_length = stringr::str_count(DrugRecord_full, ";")) %>%
+    dplyr::arrange(dplyr::desc(drug_record_length), personID) %>%
+    dplyr::slice_head(n = n_examples) %>%
+    dplyr::pull(personID)
+}
+
+cohorts <- names(con_dfs)
+```
+
+## Cohort Summaries
+
+```{r, results='asis'}
+if (length(cohorts) == 0) {
+  cat("No cohort outputs were found.\n")
+}
+
+for (cohort in cohorts) {
+  con_df <- con_dfs[[cohort]]
+  processed_df <- processed[[cohort]]
+  era_df <- eras[[cohort]]
+  stats_df <- stats[[cohort]]
+
+  if (is.null(processed_df)) processed_df <- data.frame()
+  if (is.null(era_df)) era_df <- data.frame()
+  if (is.null(stats_df)) stats_df <- data.frame()
+
+  cat("### ", cohort, "\n\n", sep = "")
+  print(knitr::kable(cohort_summary_table(con_df, processed_df)))
+  cat("\n")
+
+  if (nrow(processed_df) > 0) {
+    print(regimens_per_person_plot(processed_df))
+    cat("\n")
+  } else {
+    cat("No processed regimens were detected for this cohort.\n\n")
+  }
+
+  if (nrow(era_df) > 0) {
+    print(plotFrequency(era_df, top_n = 10))
+    cat("\n")
+
+    print(first_drug_offset_plot(era_df))
+    cat("\n")
+
+    if (nrow(stats_df) > 0) {
+      print(knitr::kable(stats_df))
+      cat("\n")
+    }
+  } else {
+    cat("No regimen eras were detected for this cohort.\n\n")
+  }
+}
+```
+
+## Example Alignments
+
+```{r, results='asis'}
+for (cohort in cohorts) {
+  era_df <- eras[[cohort]]
+  if (is.null(era_df) || nrow(era_df) == 0) {
+    next
+  }
+
+  ids <- example_subject_ids(era_df, n_examples)
+  if (length(ids) == 0) {
+    next
+  }
+
+  cat("### ", cohort, "\n\n", sep = "")
+  for (id in ids) {
+    cat("#### Subject ", id, "\n\n", sep = "")
+    print(plotAlignmentByCohort(dplyr::filter(era_df, personID == id)))
+    cat("\n")
+  }
+}
+```

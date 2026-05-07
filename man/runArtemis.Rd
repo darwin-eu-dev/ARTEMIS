@@ -4,12 +4,26 @@
 \alias{runArtemis}
 \title{Run the ARTEMIS pacakge}
 \usage{
-runArtemis(cdm, outputFolder = "Results")
+runArtemis(
+  cdm,
+  outputFolder = "Results",
+  runMM = FALSE,
+  runAML = TRUE,
+  generateReportOutput = TRUE,
+  reportExamples = 5,
+  renderReport = TRUE
+)
 }
 \arguments{
 \item{cdm}{A CDM reference object created by `CDMConnector::cdmFromCon`}
 
 \item{outputFolder}{The full path to a folder where the results should be saved}
+
+\item{generateReportOutput}{Whether to generate a Quarto report from saved ARTEMIS outputs}
+
+\item{reportExamples}{Number of example subjects with longer drug records to include per cohort}
+
+\item{renderReport}{Whether to render the Quarto report immediately when Quarto is available}
 }
 \value{
 NULL (invisibly). Results are written to `outputFolder`.

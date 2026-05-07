@@ -2,6 +2,9 @@
 #'
 #' @param cdm A CDM reference object created by `CDMConnector::cdmFromCon`
 #' @param outputFolder The full path to a folder where the results should be saved
+#' @param generateReportOutput Whether to generate a Quarto report from saved ARTEMIS outputs
+#' @param reportExamples Number of example subjects with longer drug records to include per cohort
+#' @param renderReport Whether to render the Quarto report immediately when Quarto is available
 #' 
 #' @return NULL (invisibly). Results are written to `outputFolder`.
 #' 
@@ -10,7 +13,10 @@ runArtemis <- function(
   cdm, 
   outputFolder = "Results",
   runMM = FALSE,
-  runAML = TRUE  
+  runAML = TRUE,
+  generateReportOutput = TRUE,
+  reportExamples = 5,
+  renderReport = TRUE
 ){
 
   # ===========================================================================
@@ -172,16 +178,25 @@ runArtemis <- function(
         calculateEras()
     
     log4r::info(logger, sprintf("get stats for %s", cohort))
-    # stats[[cohort]] <- eras[[cohort]] |> 
-    # generateRegimenStats()
+    stats[[cohort]] <- eras[[cohort]] |>
+      generateRegimenStats()
   }
 
-  # saveRDS(eras, file.path(outputFolder, "eras.rds"))
-  # saveRDS(stats, file.path(outputFolder, "stats.rds"))
+  saveRDS(eras, file.path(outputFolder, "eras.rds"))
+  saveRDS(stats, file.path(outputFolder, "stats.rds"))
 
   # ===========================================================================
   # Step 4: Save outputs
   # ===========================================================================
+
+  if (generateReportOutput) {
+    log4r::info(logger, "Generating ARTEMIS report")
+    generateReport(
+      outputFolder = outputFolder,
+      nExamples = reportExamples,
+      render = renderReport
+    )
+  }
 
   log4r::info(logger, "Leaving database connection open for caller-managed cleanup")
   invisible(NULL)

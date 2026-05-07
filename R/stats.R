@@ -6,6 +6,10 @@
 #' @return A data frame containing summary stats from processed regimen data
 #' @export
 generateRegimenStats <- function(processedEras) {
+    if (nrow(processedEras) == 0) {
+        return(data.frame())
+    }
+
     processedEras$t_total <- (processedEras$t_end - processedEras$t_start) +
         1
 
