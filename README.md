@@ -1,6 +1,6 @@
 <p float="left">
 
-<img src="./img/artemis.png" style="vertical-align: center;" width="100"/>
+<img src="vignettes/images/artemis.png" style="vertical-align: center;" width="100"/>
 
 </p>
 
@@ -11,12 +11,12 @@ Although applicable to various contexts, ARTEMIS is primarily intended for cance
 
 
 <figure>
-<img src="./img/Workflow_Detailed.png?" alt="ARTEMIS Workflow" />
+<img src="vignettes/images/Workflow_Detailed.png" alt="ARTEMIS Workflow" />
 <figcaption aria-hidden="true">ARTEMIS Workflow</figcaption>
 </figure>
 
 ### Quick to Docs:
-* See [release notes](docs/branch-versioning.md) for versioning and contribution.
+* See [Releases & Branch Workflow](https://ohdsi.github.io/ARTEMIS/articles/branch-versioning.html) for versioning and contribution.
 
 ## Installation
 
@@ -124,16 +124,29 @@ Raw alignments are subsequently post-processed. These steps include resolving ov
     pa <- ra %>% 
             processAlignments(regimenCombine = 28)
 
+To get alignment summary statistics per patient
+
+```
+sa <- generateSummaryReport(pa, ra, regimens)
+```
+Where the columns are: 
+| Column Name                  | Description                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `regimenStartAfterFirstDrug` | Indicates whether the regimen start date occurs after the first recorded drug exposure. |
+| `regimenEndsBeforeLastDrug`  | Indicates whether the regimen end date occurs before the last recorded drug exposure.   |
+| `sameConsecutiveRegimens`    | Indicates whether consecutive regimens are identical.                              |
+| `nonRegimenDrugExposure`     | Indicates the presence of drug exposures that do not belong to any defined regimen.                                 |
+| `anyDrugMissingInRegimens`   | Indicates whether expected drugs are missing from one or more regimen definitions.                                  |
 
 Individual patient regimens can be visualized using `plotAlignment`.
 
 ```
-p <- plotAlignment(pa)
+p <- plotAlignment(pa, regimens)
 p
 ```
 
 <figure>
-<img src="./img/alignment_example.png?" alt="ARTEMIS Workflow" />
+<img src="./vignettes/images/alignment_example.png?" alt="ARTEMIS Workflow" />
 <figcaption aria-hidden="true">Visualization of Aligned Regimens</figcaption>
 </figure>
 
@@ -154,8 +167,8 @@ These functions display the most frequent regimens, but additional regimens can 
 
 Finally, basic statistics is providedy by: 
 
-    regStats <- processedEras %>% g
-            enerateRegimenStats()
+    regStats <- pa %>% 
+            generateRegimenStats()
 
 
 ### DatabaseConnector
@@ -185,8 +198,27 @@ If the OHDSI package [CirceR](https://github.com/OHDSI/CirceR) is not already in
 
 
 
+##  User Documentation
+
+Documentation can be found on the [package website](https://ohdsi.github.io/ARTEMIS/).
+
 ## Getting help
 
 If you encounter a clear bug, please file an issue with a minimal
 [reproducible example](https://reprex.tidyverse.org/) at the [GitHub
 issues page](https://github.com/OHDSI/ARTEMIS/issues).
+
+## Support
+
+* Developer questions/comments/feedback: <a href="https://forums.ohdsi.org/c/developers/7">OHDSI Forum</a>
+* We use the <a href="https://github.com/OHDSI/ARTEMIS/issues">GitHub issue tracker</a> for all bugs/issues/enhancements
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit format, PR checklist, and the
+[Technical Debt Standard](CONTRIBUTING.md#technical-debt-standard).
+
+Full workflow documentation is published at the package website:
+- [Releases & Branch Workflow](https://ohdsi.github.io/ARTEMIS/articles/branch-versioning.html)
+- [Testing Strategy & Commit Standards](https://ohdsi.github.io/ARTEMIS/articles/testing-strategy.html)
+ 
