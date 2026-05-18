@@ -28,8 +28,7 @@ library(ARTEMIS)
 # Get breast cancer test CDM
 cdm <- TestGenerator::patientsCDM(pathJson = NULL, 
                                   testName = "BC",
-                                  cdmVersion = "5.4",
-                                  dbms = "duckdb"
+                                  cdmVersion = "5.4"
                                 )
 
 
@@ -70,8 +69,7 @@ new$regString <- "21.bevacizumab;0.docetaxel;21.bevacizumab;0.docetaxel;21.bevac
 new$shortString <- new$regString
 regimens <- dplyr::bind_rows(regimens, new)
 
-
-# Create con_df
+##
 con_df <- cdm$drug_exposure |> 
     dplyr::inner_join(
       cdm[[cohortName]],
@@ -90,6 +88,8 @@ con_df <- cdm$drug_exposure |>
     ) |> 
     dplyr::transmute(
       person_id,
+      cohort_start_date,
+      cohort_end_date,
       drug_exposure_start_date,
       drug_concept_id,
       ancestor_concept_id,
@@ -97,11 +97,20 @@ con_df <- cdm$drug_exposure |>
     ) |>
     dplyr::collect()
 
-con_df <- con_df |>
+  con_df <- con_df |>
     dplyr::mutate(
       person_id = as.character(person_id),
-      drug_exposure_start_date = as.Date(drug_exposure_start_date)
+      cohort_start_date = normalize_date(cohort_start_date),
+      cohort_end_date = normalize_date(cohort_end_date),
+      drug_exposure_start_date = normalize_date(drug_exposure_start_date)
+    ) |>
+    dplyr::mutate(
+      drug_exposure_day_relative = as.numeric(drug_exposure_start_date - cohort_start_date)
     )
+
+
+##
+
 
 # Prepare a data.frame of patient drug records used in the alignment step
 stringDF <- stringDF_from_cdm(con_df = con_df,
