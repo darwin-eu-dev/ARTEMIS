@@ -278,8 +278,8 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
   df$mid_x <- (df$plot_start + df$plot_end) / 2
 
   cohort_lines <- data.frame(
-      xintercept = c(0, cohort_end_day),
-      marker = c("Cohort start", "Cohort end")
+      xintercept = c(0),
+      marker = c("Cohort start")
   )
 
   p <- df %>%

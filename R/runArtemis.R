@@ -13,10 +13,11 @@ runArtemis <- function(
   cdm, 
   outputFolder = "Results",
   runMM = FALSE,
-  runAML = TRUE,
-  generateReportOutput = TRUE,
+  runAML = FALSE,
+  runBC = TRUE,
+  generateReportOutput = FALSE,
   reportExamples = 5,
-  renderReport = TRUE
+  renderReport = FALSE
 ){
 
   # ===========================================================================
@@ -43,7 +44,7 @@ runArtemis <- function(
   log4r::info(logger, "[Step 0] CDM snapshot saved")
 
   # ===========================================================================
-  # Step 1: Create Cohorts
+  # Step 1: Create Cohorts: MM (P4-C2-004), AML (P4-C1-007), Breast Cancer
   # ===========================================================================
 
   log4r::info(logger, "[Step 1] Creating cohorts")
@@ -55,7 +56,7 @@ runArtemis <- function(
     cohorts <- c(cohorts, "mm_cohort")
 
     mm_codes <- omopgenerics::importConceptSetExpression(
-        path = system.file("cohorts", "mm_narrow.json", package = "ARTEMIS")
+        path = system.file("concept_sets", "mm_narrow.json", package = "ARTEMIS")
     ) |> CodelistGenerator::asCodelist(cdm = cdm)
     mm_codes <- unlist(mm_codes)
 
@@ -70,12 +71,11 @@ runArtemis <- function(
         overwrite = TRUE
     )
     
-    # log cohort size
   }
 
   if (runAML) {
     # AML cohort from is a CohortSet json
-    log4r::info(logger, "Generate AML cohort from sohortSet")
+    log4r::info(logger, "Generate AML cohort from cohortSet")
 
     cohorts <- c(cohorts, "aml_cohort")
     aml_cohort <- CDMConnector::readCohortSet(
@@ -91,14 +91,34 @@ runArtemis <- function(
     )
   }
 
+  if (runBC) {
+    # breast cancer cohort from is a CohortSet json
+    log4r::info(logger, "Generate breast cancer cohort from cohortSet")
+
+    cohorts <- c(cohorts, "bc_cohort")
+    bc_cohort <- CDMConnector::readCohortSet(
+      path = system.file("cohorts", "breastCancer.json", package = "ARTEMIS")
+    )
+
+    cdm <- CDMConnector::generateCohortSet(
+        cdm = cdm,
+        cohortSet = bc_cohort,
+        name = "bc_cohort",
+        computeAttrition = TRUE,
+        overwrite = TRUE
+    )
+  }
+
 
   # ===========================================================================
   # Step 2: Preprocessing
   # ===========================================================================
   log4r::info(logger, "[Step 2] Preprocessing")
 
-  validdrugs <- loadDrugs()
+  validdrugs <- read.csv(system.file("concept_sets", "onconet_validdrugs.csv", package = "ARTEMIS"))
   regimens <- loadRegimens(condition = "all")
+  regimens <- regimens |> 
+    dplyr::filter(grepl("breast", tolower(condition)))
   regGroups <- loadGroups()
   
   con_dfs <- list()

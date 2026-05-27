@@ -1,143 +1,105 @@
+devtools::load_all()
 # ################################################################
 # # Test
 # ################################################################
+# ---------------------- Create TEST CDM -------------------- #
+#
 # TestGenerator::readPatients.xl(filePath = "mm_test.xlsx", 
 #     testName = "MM",
 #     outputPath = NULL,
 #     cdmVersion = "5.4")
 
-# cdm <- TestGenerator::patientsCDM(pathJson = NULL, 
-#                                   testName = "AML",
-#                                   cdmVersion = "5.4")
-
-# runArtemis(cdm, 
-#   "Results_AML",
-#   runMM = FALSE,
-#   runAML = TRUE,
-#   generateReportOutput = TRUE,
-#   reportExamples = 5,
-#   renderReport = TRUE
-
-# )
-# ################################################################
-
-library(dplyr)
-library(CDMConnector)
-library(ARTEMIS)
-
-# Get breast cancer test CDM
 cdm <- TestGenerator::patientsCDM(pathJson = NULL, 
-                                  testName = "BC",
-                                  cdmVersion = "5.4"
-                                )
+                                  testName = "testBreastCancerRegimens",
+                                  cdmVersion = "5.4")
 
+                                  
+# ---------------------- Run ARTEMIS ---------------------- #
 
-# create cohort that has all cdm patients
-all_persons_cohort <- cdm$person %>%
-  inner_join(cdm$observation_period, by = "person_id") %>%
-  select(person_id, observation_period_start_date) %>%
-  mutate(
-    cohort_definition_id = 1,
-    cohort_start_date = observation_period_start_date,
-    cohort_end_date = observation_period_start_date
-  ) %>%
-  select(person_id, cohort_definition_id, cohort_start_date, cohort_end_date)
+outputFolder <- "Results_BC"
 
-# Copy cohort table to database schema (example schema: cdm_results)
-cdm$all_persons_cohort <- copy_to(
-  CDMConnector::cdmCon(cdm),
-  all_persons_cohort,
-  name = "all_persons_cohort",
-  temporary = FALSE,
-  overwrite = TRUE,
-  schema = "cdm_results"
+runArtemis(cdm, 
+  outputFolder,
+  runMM = FALSE,
+  runAML = FALSE,
+  runBC = TRUE,
+  generateReportOutput = TRUE,
+  reportExamples = 5,
+  renderReport = TRUE
 )
 
-# Load variables
-cohortName <- "all_persons_cohort"
-validdrugs <- loadDrugs()
+# ---------------------- Read-in Outputs ---------------------- #
+con_dfs <- readRDS(file.path(outputFolder, "con_dfs.rds"))
+outputs <- readRDS(file.path(outputFolder, "outputs.rds"))
+processed <- readRDS(file.path(outputFolder, "processed.rds"))
+eras <- readRDS(file.path(outputFolder, "eras.rds"))
+stats <- readRDS(file.path(outputFolder, "stats.rds"))
+
+
+###################################################################
+
+if (!dir.exists(outputFolder)) {
+    dir.create(outputFolder, recursive = TRUE)
+  }
+
+# ---------------------- Create Cohorts ---------------------- #
+bc_cohort <- CDMConnector::readCohortSet(
+  path = system.file("cohorts", "breastCancer.json", package = "ARTEMIS")
+)
+
+cdm <- CDMConnector::generateCohortSet(
+    cdm = cdm,
+    cohortSet = bc_cohort,
+    name = "bc_cohort",
+    computeAttrition = TRUE,
+    overwrite = TRUE
+)
+
+# ---------------------- Load Rregimens & Drugs ---------------------- #
+validdrugs <- read.csv(system.file("data", "onconet_validdrugs.csv", package = "ARTEMIS"))
+regimens <- loadRegimens(condition = "all")
 regGroups <- loadGroups()
 
-## Make breast cancer regimens
-regimens <- loadRegimens(condition = "all")
-regimens <- regimens |> 
-    dplyr::filter(grepl("breast", tolower(condition)))
-# Add D-AC+Bev variant corresponding to test patient
-new <- filter(regimens, regCode == "56896")[1,]
-new$variant <- "Variant #02"
-new$regString <- "21.bevacizumab;0.docetaxel;21.bevacizumab;0.docetaxel;21.bevacizumab;0.docetaxel;21.bevacizumab;0.docetaxel;21.bevacizumab;0.cyclophosphamide;0.doxorubicin;21.bevacizumab;0.cyclophosphamide;0.doxorubicin;21.cyclophosphamide;0.doxorubicin;"
-new$shortString <- new$regString
-regimens <- dplyr::bind_rows(regimens, new)
+con_dfs <- list()
+stringDFs <- list()
 
-##
-con_df <- cdm$drug_exposure |> 
-    dplyr::inner_join(
-      cdm[[cohortName]],
-      by = c("person_id" = "person_id")
-    ) |> 
-    dplyr::left_join(
-      cdm$concept_ancestor,
-      by = c("drug_concept_id" = "descendant_concept_id")
-    ) |> 
-    dplyr::left_join(
-      cdm$concept,
-      by = c("ancestor_concept_id" = "concept_id")
-    ) |> 
-    dplyr::filter(
-      tolower(concept_class_id) == "ingredient"
-    ) |> 
-    dplyr::transmute(
-      person_id,
-      cohort_start_date,
-      cohort_end_date,
-      drug_exposure_start_date,
-      drug_concept_id,
-      ancestor_concept_id,
-      concept_name
-    ) |>
-    dplyr::collect()
+# -------------------------- Pre-process -------------------------- #
 
-  con_df <- con_df |>
+df <- con_dfFromCDM(cdm, cohort)
+
+if (!inherits(df$drug_exposure_start_date, "Date")) {
+  df <- df |>
     dplyr::mutate(
-      person_id = as.character(person_id),
-      cohort_start_date = normalize_date(cohort_start_date),
-      cohort_end_date = normalize_date(cohort_end_date),
-      drug_exposure_start_date = normalize_date(drug_exposure_start_date)
-    ) |>
-    dplyr::mutate(
-      drug_exposure_day_relative = as.numeric(drug_exposure_start_date - cohort_start_date)
+      drug_exposure_start_date = as.Date(drug_exposure_start_date)
     )
+}
+con_dfs[[cohort]] <- df
+
+stringDF <- stringDF_from_cdm(con_df = df,
+                          validDrugs = validdrugs)
 
 
-##
+# -------------------------- Alignment -------------------------- #
+
+output <- stringDF |>
+generateRawAlignments(
+    regimens = regimens,
+    g = 0.4,
+    Tfac = 0.4,
+    method = "PropDiff",
+    verbose = 0
+)
+
+# -------------------------- Post-Process -------------------------- #
 
 
-# Prepare a data.frame of patient drug records used in the alignment step
-stringDF <- stringDF_from_cdm(con_df = con_df,
-                              validDrugs = validdrugs)
-
-## Alignment
-output_all <- stringDF %>%
-    generateRawAlignments(
-        regimens = regimens,
-        g = 0.4,
-        Tfac = 0.4,
-        method = "PropDiff",
-        verbose = 0
-    )
+processed <- processAlignments(output,
+                                regimens = regimens, 
+                                regimenCombine = 28)
 
 
-## Post-process Alignment
-processedAll <- output_all %>%
-    processAlignments(regimens = regimens, 
-                      regimenCombine = 28)
-
-pa <- processedAll %>% 
-    calculateEras()
-
-## Data analysis
 ## Plot alignments for every patient 
 
-p <- plotAlignment(pa)
-# check graphs
+p <- plotAlignment(eras[[1]])
 p
+

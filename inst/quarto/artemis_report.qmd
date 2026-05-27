@@ -105,14 +105,19 @@ first_drug_offset_plot <- function(era_df) {
 example_subject_ids <- function(pa, n_examples) {
   pa %>%
     dplyr::distinct(personID, DrugRecord_full) %>%
-    dplyr::mutate(drug_record_length = stringr::str_count(DrugRecord_full, ";")) %>%
-    dplyr::arrange(dplyr::desc(drug_record_length), personID) %>%
+    dplyr::mutate(
+      drug_record_distinct = stringr::str_count(DrugRecord_full, "(^|;)(?!0\\.)[0-9]+\\."),
+      drug_record_distinct = drug_record_distinct + 1
+    ) %>%
+    dplyr::arrange(dplyr::desc(drug_record_distinct), personID) %>%
     dplyr::slice_head(n = n_examples) %>%
     dplyr::pull(personID)
 }
 
 cohorts <- names(con_dfs)
 ```
+
+Report created: `r format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")`
 
 ## Cohort Summaries
 

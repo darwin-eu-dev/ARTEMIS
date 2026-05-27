@@ -36,7 +36,6 @@ Imports:
     CDMConnector,
     log4r,
     omopgenerics,
-    odbc,
     CodelistGenerator
 License: Apache License (>= 2)
 VignetteBuilder: knitr

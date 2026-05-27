@@ -28,8 +28,10 @@ generateReport <- function(
   if (!ok) {
     stop("Failed to write report template to: ", report_path)
   }
+  report_path <- normalizePath(report_path, winslash = "/", mustWork = TRUE)
 
   rendered_path <- file.path(outputFolder, outputFile)
+  output_folder_abs <- normalizePath(outputFolder, winslash = "/", mustWork = TRUE)
 
   if (render) {
     quarto_bin <- Sys.which("quarto")
@@ -41,10 +43,10 @@ generateReport <- function(
     } else {
       args <- c(
         "render",
-        basename(report_path),
+        report_path,
         "--to", "html",
-        "--output", basename(rendered_path),
-        "-P", paste0("output_folder:", normalizePath(outputFolder, winslash = "/", mustWork = TRUE)),
+        "--output", outputFile,
+        "-P", paste0("output_folder:", output_folder_abs),
         "-P", paste0("n_examples:", as.integer(nExamples))
       )
 
@@ -52,8 +54,7 @@ generateReport <- function(
         quarto_bin,
         args = args,
         stdout = TRUE,
-        stderr = TRUE,
-        wd = outputFolder
+        stderr = TRUE
       )
 
       attr(status, "status") <- attr(status, "status", exact = TRUE)
