@@ -1,4 +1,7 @@
-# Script that walks through running ARTEMIS
+## Script that walks through running ARTEMIS
+
+# install and load pacakge
+devtools::install()
 library(ARTEMIS)
 
 # Fill in your db details below
