@@ -1,11 +1,14 @@
-#' Run the ARTEMIS pacakge
+#' Run the ARTEMIS package
 #'
 #' @param cdm A CDM reference object created by `CDMConnector::cdmFromCon`
 #' @param outputFolder The full path to a folder where the results should be saved
+#' @param runMM Whether to generate and analyse the multiple myeloma cohort
+#' @param runAML Whether to generate and analyse the acute myeloid leukemia cohort
+#' @param runBC Whether to generate and analyse the breast cancer cohort
 #' @param generateReportOutput Whether to generate a Quarto report from saved ARTEMIS outputs
 #' @param reportExamples Number of example subjects with longer drug records to include per cohort
 #' @param renderReport Whether to render the Quarto report immediately when Quarto is available
-#' 
+#'
 #' @return NULL (invisibly). Results are written to `outputFolder`.
 #' 
 #' @export
@@ -117,9 +120,14 @@ runArtemis <- function(
 
   validdrugs <- read.csv(system.file("concept_sets", "onconet_validdrugs.csv", package = "ARTEMIS"))
   regimens <- loadRegimens(condition = "all")
-  regimens <- regimens |> 
-    dplyr::filter(grepl("breast", tolower(condition)))
   regGroups <- loadGroups()
+
+  # Each cohort is aligned against the regimens for its own condition.
+  cohort_condition_patterns <- list(
+    mm_cohort  = "multiple myeloma",
+    aml_cohort = "acute myeloid leukemia",
+    bc_cohort  = "breast"
+  )
   
   con_dfs <- list()
   stringDFs <- list()
@@ -173,20 +181,27 @@ runArtemis <- function(
   }
 
   for (cohort in names(stringDFs)) {
+    pattern <- cohort_condition_patterns[[cohort]]
+    cohort_regimens <- if (!is.null(pattern)) {
+      regimens |> dplyr::filter(grepl(pattern, tolower(condition)))
+    } else {
+      regimens
+    }
+
     log4r::info(logger, sprintf("run alginments for %s", cohort))
     outputs[[cohort]] <- stringDFs[[cohort]] |>
     generateRawAlignments(
-        regimens = regimens,
+        regimens = cohort_regimens,
         g = 0.4,
         Tfac = 0.4,
         method = "PropDiff",
         verbose = 0
     )
 
-    ## Post-process 
+    ## Post-process
     log4r::info(logger, sprintf("run postprocessing for %s", cohort))
     processed[[cohort]] <- outputs[[cohort]] |>
-        processAlignments(regimens = regimens, 
+        processAlignments(regimens = cohort_regimens,
                           regimenCombine = 28)
 
     log4r::info(logger, sprintf("get drug eras for %s", cohort))

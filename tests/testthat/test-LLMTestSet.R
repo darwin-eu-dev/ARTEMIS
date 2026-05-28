@@ -2,6 +2,19 @@
 
 testthat::test_that("PatientGenerator creates a correct set of test patients", {
 
+  # Opt-in integration test: depends on an external LLM (PatientGenerator) and
+  # createCancerCohorts(), which is not yet part of this package. It is
+  # non-deterministic and requires network/API access, so it is skipped unless
+  # ARTEMIS_RUN_LLM_TESTS is set.
+  testthat::skip_if(
+    !nzchar(Sys.getenv("ARTEMIS_RUN_LLM_TESTS")),
+    "Set ARTEMIS_RUN_LLM_TESTS to run the LLM-driven cancer cohort test"
+  )
+  testthat::skip_if_not_installed("PatientGenerator")
+  testthat::skip_if_not_installed("TestGenerator")
+  testthat::skip_if_not_installed("CohortConstructor")
+  testthat::skip_if_not_installed("PatientProfiles")
+
   patientGenerator <- PatientGenerator::patientChat$new(
     model = "gpt-5.5"
   )

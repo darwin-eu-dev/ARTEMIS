@@ -266,20 +266,28 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
 
   patient_components = as.character(patient_components)
   regimen_components = as.character(regimen_components)
+
+  # brewer.pal() requires 3 <= n <= maxcolors; interpolate so any n works
+  make_palette <- function(n, name) {
+    if (n < 1) return(character(0))
+    max_n <- RColorBrewer::brewer.pal.info[name, "maxcolors"]
+    grDevices::colorRampPalette(RColorBrewer::brewer.pal(max_n, name))(n)
+  }
+
   if(length(patient_components) < 10) {
-      patient_colors <- setNames(RColorBrewer::brewer.pal(length(patient_components), "Set1"), patient_components)
+      patient_colors <- setNames(make_palette(length(patient_components), "Set1"), patient_components)
   } else {
       patient_colors <- setNames(viridisLite::viridis(length(patient_components), option = "D"), patient_components)
   }
-  regimen_colors <- setNames(RColorBrewer::brewer.pal(length(regimen_components), "Paired"), regimen_components)
+  regimen_colors <- setNames(make_palette(length(regimen_components), "Paired"), regimen_components)
   colors <- c(patient_colors, regimen_colors)
   df$patient_components_col <- ifelse(df$case == "drugs", as.character(df$component), NA)
   df$regimen_components_col <- ifelse(df$case == "regimen", as.character(df$component), NA)
   df$mid_x <- (df$plot_start + df$plot_end) / 2
 
   cohort_lines <- data.frame(
-      xintercept = c(0),
-      marker = c("Cohort start")
+      xintercept = c(0, cohort_end_day),
+      marker = c("Cohort start", "Cohort end")
   )
 
   p <- df %>%

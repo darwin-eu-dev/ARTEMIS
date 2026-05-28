@@ -65,7 +65,7 @@ generateRawAlignments <- function(stringDF,
         align_patients_regimens = py_functions$align_patients_regimens
     }
 
-    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, method=method)
+    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=mem, method=method)
   
     output <- tryCatch({
         if (!is.null(output) && !inherits(output, "try-error") && nrow(output) == 0) {

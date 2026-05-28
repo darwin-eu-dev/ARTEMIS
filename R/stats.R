@@ -40,9 +40,7 @@ generateRegimenStats <- function(processedEras) {
     frequency <- as.data.frame(table(processedEras$component) / sum(table(processedEras$component)))
     colnames(count) <- c("component", "count")
     colnames(frequency) <- c("component", "frequency")
-    
-    dim(merge(meanScores, medianScores))
-    
+
     aggregated_Processed_Data <- merge(merge(merge(
         merge(
             merge(

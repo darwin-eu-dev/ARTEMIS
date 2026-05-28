@@ -2,22 +2,29 @@
 % Please edit documentation in R/runArtemis.R
 \name{runArtemis}
 \alias{runArtemis}
-\title{Run the ARTEMIS pacakge}
+\title{Run the ARTEMIS package}
 \usage{
 runArtemis(
   cdm,
   outputFolder = "Results",
   runMM = FALSE,
-  runAML = TRUE,
-  generateReportOutput = TRUE,
+  runAML = FALSE,
+  runBC = TRUE,
+  generateReportOutput = FALSE,
   reportExamples = 5,
-  renderReport = TRUE
+  renderReport = FALSE
 )
 }
 \arguments{
 \item{cdm}{A CDM reference object created by `CDMConnector::cdmFromCon`}
 
 \item{outputFolder}{The full path to a folder where the results should be saved}
+
+\item{runMM}{Whether to generate and analyse the multiple myeloma cohort}
+
+\item{runAML}{Whether to generate and analyse the acute myeloid leukemia cohort}
+
+\item{runBC}{Whether to generate and analyse the breast cancer cohort}
 
 \item{generateReportOutput}{Whether to generate a Quarto report from saved ARTEMIS outputs}
 
@@ -29,5 +36,5 @@ runArtemis(
 NULL (invisibly). Results are written to `outputFolder`.
 }
 \description{
-Run the ARTEMIS pacakge
+Run the ARTEMIS package
 }

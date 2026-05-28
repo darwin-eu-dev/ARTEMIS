@@ -4,10 +4,14 @@ test_that("calculate_eras works for a single patient", {
     pa <- data.frame(
             personID = "P1",
             component = c("A", "B", "C"),
+            regCode = c("rA", "rB", "rC"),
             t_start = c(0, 100, 200),
             t_end   = c(120, 150, 250),
             adjustedS = c(1, 1, 1),
             timeToEOD = c(300, 200, 100),
+            cohort_start_date = as.Date("2020-01-01"),
+            cohort_end_date = as.Date("2021-01-01"),
+            first_drug_exposure_day = 0,
             DrugRecord_full = "A;B;C"
             )
 
