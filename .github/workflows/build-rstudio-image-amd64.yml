@@ -58,12 +58,15 @@ jobs:
         env:
           IMAGE: ${{ steps.cfg.outputs.image }}
           TAGS: ${{ steps.cfg.outputs.tags }}
+          DOCKER_BUILDKIT: "1"
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
         run: |
           IFS=',' read -ra TAG_ARRAY <<< "${TAGS}"
           for TAG in "${TAG_ARRAY[@]}"; do
             ARCH_TAG="${IMAGE}:${TAG}-amd64"
             docker build \
               --file ./docker/Dockerfile \
+              --secret id=github_pat,env=GITHUB_PAT \
               --tag "${ARCH_TAG}" \
               .
             docker push "${ARCH_TAG}"
