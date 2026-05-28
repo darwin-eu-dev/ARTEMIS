@@ -27,8 +27,8 @@ JDBC drivers, and RStudio Server, so no manual installation is required.
 The registry is the DARWIN EU® Azure Container Registry (ACR):
 
 ```
-Login server : onconet-thg9fxc7hxgvc6ga.azurecr.io
-Image        : onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis
+Login server : onconet-fhg9fxc7hxgvc6ga.azurecr.io
+Image        : onconet-fhg9fxc7hxgvc6ga.azurecr.io/artemis
 ```
 
 Pick **one** of the three options below to obtain the image.
@@ -45,7 +45,7 @@ With the [Azure CLI](https://learn.microsoft.com/cli/azure/) installed:
 ```bash
 az login
 az acr login --name onconet
-docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:latest-amd64
+docker pull onconet-fhg9fxc7hxgvc6ga.azurecr.io/artemis:latest-amd64
 # or a specific release, e.g. :v1.6.0-amd64   (use the -arm64 tags on arm64 hosts)
 ```
 
@@ -53,8 +53,8 @@ If DTZ instead provides a registry username/token, you can log in to the
 registry directly without the Azure CLI:
 
 ```bash
-docker login onconet-thg9fxc7hxgvc6ga.azurecr.io
-docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64
+docker login onconet-fhg9fxc7hxgvc6ga.azurecr.io
+docker pull onconet-fhg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64
 ```
 
 ### Option B — Build the image from source
@@ -80,7 +80,7 @@ On a machine **with** internet access, pull (Option A) or build (Option B) the
 image, then export it to a tar archive:
 
 ```bash
-docker save onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64 -o artemis_<tag>-amd64.tar
+docker save onconet-fhg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64 -o artemis_<tag>-amd64.tar
 # optional: gzip artemis_<tag>-amd64.tar
 ```
 
@@ -102,7 +102,7 @@ docker run --rm -it \
   -p 8787:8787 \
   -e PASSWORD=<choose_a_password> \
   -v "$(pwd)/Results:/home/rstudio/ARTEMIS/Results" \
-  onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64
+  onconet-fhg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64
 ```
 
 Open <http://localhost:8787> and log in as user `rstudio` with the password you
