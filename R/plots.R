@@ -1,5 +1,7 @@
-# Build an n-colour palette from a ColorBrewer palette name, interpolating so
-# any n works (brewer.pal() itself requires 3 <= n <= maxcolors).
+# Fix (Copilot review): plotAlignment()/plotAlignmentByCohort() previously
+# called brewer.pal() directly, which errors when a cohort has <3 (or
+# >maxcolors) drug/regimen components. Build the palette from a ColorBrewer
+# name but interpolate with colorRampPalette() so any n (incl. 0/1/2) works.
 make_palette <- function(n, name) {
   if (n < 1) return(character(0))
   max_n <- RColorBrewer::brewer.pal.info[name, "maxcolors"]
@@ -97,7 +99,8 @@ plotAlignment <- function(pa, known_drugs = NULL) {
 
   patient_components = as.character(patient_components)
   regimen_components = as.character(regimen_components)
-  # Generate dynamic color palettes
+  # Generate dynamic colour palettes via make_palette() (handles any n; see the
+  # fix note on make_palette above) instead of calling brewer.pal() directly.
   if(length(patient_components) < 10) {
       patient_colors <- setNames(make_palette(length(patient_components), "Set1"), patient_components)
   } else {

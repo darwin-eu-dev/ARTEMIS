@@ -1,7 +1,9 @@
-# Package-internal environment holding the loaded regimens/concepts. Populated
-# by loadRegimens() and consumed by the blacklist helpers below. Using a
-# namespace-level environment (instead of .GlobalEnv) keeps the user's global
-# workspace clean while remaining reachable by these functions via lexical scope.
+# Fix (Copilot review): loadRegimens() used to assign regimens_env into the
+# user's .GlobalEnv (a surprising side effect). Instead, hold the loaded
+# regimens/concepts in this package-internal environment - populated by
+# loadRegimens() and consumed by the blacklist helpers below. A namespace-level
+# environment keeps the user's workspace clean while staying reachable here via
+# lexical scope.
 regimens_env <- new.env(parent = emptyenv())
 
 #' Map concept IDs to concept names

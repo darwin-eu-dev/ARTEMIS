@@ -234,8 +234,9 @@ loadRegimens <- function(condition = "all", absolute = NULL,
                                         "multipleMyeloma" = c("Multiple Myeloma")),
                         concept_file = NULL,
                         ignore_default_list = FALSE) {
-  # Reset the package-internal environment (defined in preAlign.R) rather than
-  # creating one in the user's global environment.
+  # Fix (Copilot review): reuse the package-internal environment (defined in
+  # preAlign.R) instead of creating one in the user's .GlobalEnv. Reset it so
+  # each call starts clean.
   rm(list = ls(regimens_env, all.names = TRUE), envir = regimens_env)
 
   # Load from absolute path if provided
