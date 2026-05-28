@@ -21,3 +21,7 @@ Output_Processed.csv
 ^\.venv$
 ^__pycache__$
 ^inst/\.r-reticulate$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
