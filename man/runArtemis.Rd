@@ -7,9 +7,7 @@
 runArtemis(
   cdm,
   outputFolder = "Results",
-  runMM = FALSE,
-  runAML = FALSE,
-  runBC = TRUE,
+  cancers = c("breast_cancer", "lung_cancer"),
   generateReportOutput = FALSE,
   reportExamples = 5,
   renderReport = FALSE
@@ -20,11 +18,10 @@ runArtemis(
 
 \item{outputFolder}{The full path to a folder where the results should be saved}
 
-\item{runMM}{Whether to generate and analyse the multiple myeloma cohort}
-
-\item{runAML}{Whether to generate and analyse the acute myeloid leukemia cohort}
-
-\item{runBC}{Whether to generate and analyse the breast cancer cohort}
+\item{cancers}{Character vector of cancer cohorts (from P4C5006) to analyse.
+One or more of "bladder_cancer", "breast_cancer", "colorectal_cancer",
+"lung_cancer", "melanoma_of_skin", "oesophageal_cancer", "prostate_cancer".
+Defaults to breast and lung cancer.}
 
 \item{generateReportOutput}{Whether to generate a Quarto report from saved ARTEMIS outputs}
 
@@ -36,5 +33,8 @@ runArtemis(
 NULL (invisibly). Results are written to `outputFolder`.
 }
 \description{
-Run the ARTEMIS package
+Cohorts are created with [P4C5006::createCancerCohorts()] (the
+\href{https://github.com/darwin-eu-studies/P4-C5-006}{P4-C5-006} phenotype
+library) and the requested cancer cohorts are then aligned against their
+matching treatment regimens.
 }

@@ -18,11 +18,9 @@ cdm <- TestGenerator::patientsCDM(pathJson = NULL,
 
 outputFolder <- "Results_BC"
 
-runArtemis(cdm, 
+runArtemis(cdm,
   outputFolder,
-  runMM = FALSE,
-  runAML = FALSE,
-  runBC = TRUE,
+  cancers = "breast_cancer",
   generateReportOutput = TRUE,
   reportExamples = 5,
   renderReport = TRUE

@@ -1,23 +1,27 @@
 #' Run the ARTEMIS package
 #'
+#' Cohorts are created with [P4C5006::createCancerCohorts()] (the
+#' \href{https://github.com/darwin-eu-studies/P4-C5-006}{P4-C5-006} phenotype
+#' library) and the requested cancer cohorts are then aligned against their
+#' matching treatment regimens.
+#'
 #' @param cdm A CDM reference object created by `CDMConnector::cdmFromCon`
 #' @param outputFolder The full path to a folder where the results should be saved
-#' @param runMM Whether to generate and analyse the multiple myeloma cohort
-#' @param runAML Whether to generate and analyse the acute myeloid leukemia cohort
-#' @param runBC Whether to generate and analyse the breast cancer cohort
+#' @param cancers Character vector of cancer cohorts (from P4C5006) to analyse.
+#'   One or more of "bladder_cancer", "breast_cancer", "colorectal_cancer",
+#'   "lung_cancer", "melanoma_of_skin", "oesophageal_cancer", "prostate_cancer".
+#'   Defaults to breast and lung cancer.
 #' @param generateReportOutput Whether to generate a Quarto report from saved ARTEMIS outputs
 #' @param reportExamples Number of example subjects with longer drug records to include per cohort
 #' @param renderReport Whether to render the Quarto report immediately when Quarto is available
 #'
 #' @return NULL (invisibly). Results are written to `outputFolder`.
-#' 
+#'
 #' @export
 runArtemis <- function(
-  cdm, 
+  cdm,
   outputFolder = "Results",
-  runMM = FALSE,
-  runAML = FALSE,
-  runBC = TRUE,
+  cancers = c("breast_cancer", "lung_cancer"),
   generateReportOutput = FALSE,
   reportExamples = 5,
   renderReport = FALSE
@@ -47,71 +51,60 @@ runArtemis <- function(
   log4r::info(logger, "[Step 0] CDM snapshot saved")
 
   # ===========================================================================
-  # Step 1: Create Cohorts: MM (P4-C2-004), AML (P4-C1-007), Breast Cancer
+  # Step 1: Create cancer cohorts via the P4-C5-006 phenotype library
   # ===========================================================================
 
-  log4r::info(logger, "[Step 1] Creating cohorts")
+  # Maps each supported P4C5006 cancer cohort to the regimen condition keyword
+  # it is aligned against.
+  cancer_regimen_conditions <- list(
+    bladder_cancer     = "bladder",
+    breast_cancer      = "breast",
+    colorectal_cancer  = "colorectal",
+    lung_cancer        = "lung",
+    melanoma_of_skin   = "melanoma",
+    oesophageal_cancer = "esophageal",
+    prostate_cancer    = "prostate"
+  )
+
+  unknown <- setdiff(cancers, names(cancer_regimen_conditions))
+  if (length(unknown) > 0) {
+    stop("Unknown cancer cohort(s): ", paste(unknown, collapse = ", "),
+         ".\nValid options: ", paste(names(cancer_regimen_conditions), collapse = ", "))
+  }
+
+  log4r::info(logger, "[Step 1] Creating cancer cohorts via P4C5006::createCancerCohorts")
+
+  cdm <- P4C5006::createCancerCohorts(
+    cdm = cdm,
+    concept_sets_folder = "cancer_cohorts",
+    name = "cancer_cohorts"
+  )
+
+  # createCancerCohorts() builds all cancer types into a single cohort table;
+  # split out the requested cancers into their own cohort tables for ARTEMIS.
+  cohort_settings <- omopgenerics::settings(cdm[["cancer_cohorts"]])
+
   cohorts <- c()
+  cohort_condition_patterns <- list()
+  for (cancer in cancers) {
+    cohort_id <- cohort_settings |>
+      dplyr::filter(cohort_name == cancer) |>
+      dplyr::pull(cohort_definition_id)
 
-  if (runMM) {
-    # MM cohort from ConceptSet json
-    log4r::info(logger, "Generate MM cohort from concept sets")
-    cohorts <- c(cohorts, "mm_cohort")
+    if (length(cohort_id) == 0) {
+      log4r::warn(logger, sprintf("%s not found in cancer_cohorts; skipping", cancer))
+      next
+    }
 
-    mm_codes <- omopgenerics::importConceptSetExpression(
-        path = system.file("concept_sets", "mm_narrow.json", package = "ARTEMIS")
-    ) |> CodelistGenerator::asCodelist(cdm = cdm)
-    mm_codes <- unlist(mm_codes)
-
-    cdm <- CDMConnector::generateConceptCohortSet(
-        cdm = cdm,
-        conceptSet = list(
-            "mm_cohort" = mm_codes
-        ),
-        end = "observation_period_end_date",
-        limit = "first",
-        name = "mm_cohort",
-        overwrite = TRUE
+    cohortTable <- paste0(cancer, "_cohort")
+    cdm[[cohortTable]] <- CohortConstructor::subsetCohorts(
+      cohort = cdm[["cancer_cohorts"]],
+      cohortId = cohort_id,
+      name = cohortTable
     )
-    
+    cohorts <- c(cohorts, cohortTable)
+    cohort_condition_patterns[[cohortTable]] <- cancer_regimen_conditions[[cancer]]
   }
-
-  if (runAML) {
-    # AML cohort from is a CohortSet json
-    log4r::info(logger, "Generate AML cohort from cohortSet")
-
-    cohorts <- c(cohorts, "aml_cohort")
-    aml_cohort <- CDMConnector::readCohortSet(
-      path = system.file("cohorts", "aml.json", package = "ARTEMIS")
-    )
-
-    cdm <- CDMConnector::generateCohortSet(
-        cdm = cdm,
-        cohortSet = aml_cohort,
-        name = "aml_cohort",
-        computeAttrition = TRUE,
-        overwrite = TRUE
-    )
-  }
-
-  if (runBC) {
-    # breast cancer cohort from is a CohortSet json
-    log4r::info(logger, "Generate breast cancer cohort from cohortSet")
-
-    cohorts <- c(cohorts, "bc_cohort")
-    bc_cohort <- CDMConnector::readCohortSet(
-      path = system.file("cohorts", "breastCancer.json", package = "ARTEMIS")
-    )
-
-    cdm <- CDMConnector::generateCohortSet(
-        cdm = cdm,
-        cohortSet = bc_cohort,
-        name = "bc_cohort",
-        computeAttrition = TRUE,
-        overwrite = TRUE
-    )
-  }
-
 
   # ===========================================================================
   # Step 2: Preprocessing
@@ -122,13 +115,6 @@ runArtemis <- function(
   regimens <- loadRegimens(condition = "all")
   regGroups <- loadGroups()
 
-  # Each cohort is aligned against the regimens for its own condition.
-  cohort_condition_patterns <- list(
-    mm_cohort  = "multiple myeloma",
-    aml_cohort = "acute myeloid leukemia",
-    bc_cohort  = "breast"
-  )
-  
   con_dfs <- list()
   stringDFs <- list()
  

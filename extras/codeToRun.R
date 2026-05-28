@@ -25,11 +25,9 @@ cdm <- CDMConnector::cdmFromCon(
   cdmSchema = cdmDatabaseSchema,
   writeSchema = resultsDatabaseSchema)
 
-runArtemis(cdm, 
-          "Results_IKNL_BC", 
-          runAML = FALSE, 
-          runMM = FALSE, 
-          runBC = TRUE,
+runArtemis(cdm,
+          "Results_IKNL_BC",
+          cancers = "breast_cancer",
           generateReportOutput = TRUE)
 
 # ------------------ Preview Report (run from terminal) ------------------ #
