@@ -79,7 +79,7 @@ COPY --chown=rstudio:rstudio DESCRIPTION ${ARTEMIS_HOME}/DESCRIPTION
 # the build reads a GitHub PAT from a BuildKit secret (kept out of image layers).
 RUN --mount=type=secret,id=github_pat \
     GITHUB_PAT="$(cat /run/secrets/github_pat 2>/dev/null)" \
-    R -e "remotes::install_github('darwin-eu-studies/P4-C5-006', upgrade = 'never')"
+    R -e "remotes::install_github('darwin-eu-studies/P4-C5-006', auth_token = Sys.getenv('GITHUB_PAT'), upgrade = 'never')"
 
 RUN R -e "remotes::install_deps('${ARTEMIS_HOME}', dependencies = c('Depends', 'Imports'), upgrade = 'never')"
 
