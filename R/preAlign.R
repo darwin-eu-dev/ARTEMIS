@@ -1,3 +1,9 @@
+# Package-internal environment holding the loaded regimens/concepts. Populated
+# by loadRegimens() and consumed by the blacklist helpers below. Using a
+# namespace-level environment (instead of .GlobalEnv) keeps the user's global
+# workspace clean while remaining reachable by these functions via lexical scope.
+regimens_env <- new.env(parent = emptyenv())
+
 #' Map concept IDs to concept names
 #' Default concept IDs when no file is provided.
 default_concept_list <- c(

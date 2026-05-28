@@ -234,8 +234,9 @@ loadRegimens <- function(condition = "all", absolute = NULL,
                                         "multipleMyeloma" = c("Multiple Myeloma")),
                         concept_file = NULL,
                         ignore_default_list = FALSE) {
-  regimens_env <- new.env()
-  assign("regimens_env", regimens_env, envir = .GlobalEnv)
+  # Reset the package-internal environment (defined in preAlign.R) rather than
+  # creating one in the user's global environment.
+  rm(list = ls(regimens_env, all.names = TRUE), envir = regimens_env)
 
   # Load from absolute path if provided
   if (!is.null(absolute)) {

@@ -1,5 +1,13 @@
+# Build an n-colour palette from a ColorBrewer palette name, interpolating so
+# any n works (brewer.pal() itself requires 3 <= n <= maxcolors).
+make_palette <- function(n, name) {
+  if (n < 1) return(character(0))
+  max_n <- RColorBrewer::brewer.pal.info[name, "maxcolors"]
+  grDevices::colorRampPalette(RColorBrewer::brewer.pal(max_n, name))(n)
+}
+
 #' Plots a full alignment output
-#' 
+#'
 #' For each patient separately, plot drug exposures and aligned regimens over time
 #' @param pa A patient alignment dataframe created by processAlignments() or calculateEras
 #' @return plot - A list of ggplot objects
@@ -91,11 +99,11 @@ plotAlignment <- function(pa, known_drugs = NULL) {
   regimen_components = as.character(regimen_components)
   # Generate dynamic color palettes
   if(length(patient_components) < 10) {
-      patient_colors <- setNames(brewer.pal(length(patient_components), "Set1"), patient_components)
+      patient_colors <- setNames(make_palette(length(patient_components), "Set1"), patient_components)
   } else {
       patient_colors <- setNames(viridis(length(patient_components), option = "D"), patient_components)
   }
-  regimen_colors <- setNames(brewer.pal(length(regimen_components), "Paired"), regimen_components)
+  regimen_colors <- setNames(make_palette(length(regimen_components), "Paired"), regimen_components)
   # Combine color mappings
   colors <- c(patient_colors, regimen_colors)
   # Create separate aesthetics for drugs and regimens
@@ -266,13 +274,6 @@ plotAlignmentByCohort <- function(pa, known_drugs = NULL) {
 
   patient_components = as.character(patient_components)
   regimen_components = as.character(regimen_components)
-
-  # brewer.pal() requires 3 <= n <= maxcolors; interpolate so any n works
-  make_palette <- function(n, name) {
-    if (n < 1) return(character(0))
-    max_n <- RColorBrewer::brewer.pal.info[name, "maxcolors"]
-    grDevices::colorRampPalette(RColorBrewer::brewer.pal(max_n, name))(n)
-  }
 
   if(length(patient_components) < 10) {
       patient_colors <- setNames(make_palette(length(patient_components), "Set1"), patient_components)
