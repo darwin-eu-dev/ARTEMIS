@@ -16,6 +16,12 @@ name: build-and-push-container-amd64
 #         GitHub forbids secret names starting with "GITHUB_", hence GH_PAT.
 
 on:
+  # TEMPORARY: test the workflow on the develop branch before it reaches main
+  # (workflow_dispatch/release only register from the default branch). Remove
+  # this push trigger once the build is verified.
+  push:
+    branches: [develop]
+    paths: [".github/workflows/build-and-push-container-amd64.yml"]
   # Publish on a GitHub Release, and allow manual runs with an optional tag.
   release:
     types: [published]
