@@ -45,6 +45,18 @@ runArtemis <- function(
   )
   on.exit(log4r::info(logger, "runArtemis finished"), add = TRUE)
 
+  log4r::info(logger, "==================== ARTEMIS run started ====================")
+  log4r::info(logger, sprintf("Output folder: %s", normalizePath(outputFolder, mustWork = FALSE)))
+  log4r::info(logger, sprintf("Cancers requested: %s", paste(cancers, collapse = ", ")))
+
+  # Helper: log person and record counts for a cohort table reference
+  logCohortCounts <- function(tbl, label) {
+    records <- as.integer(tbl |> dplyr::tally() |> dplyr::pull(n))
+    persons <- as.integer(tbl |> dplyr::distinct(subject_id) |> dplyr::tally() |> dplyr::pull(n))
+    log4r::info(logger, sprintf("%s: %d persons, %d records", label, persons, records))
+    invisible(c(persons = persons, records = records))
+  }
+
   # Save CDM snapshot at the start (before any modifications)
   snap <- CDMConnector::snapshot(cdm)
   write.csv(snap, file = file.path(outputFolder, "cdm_snapshot.csv"), row.names = FALSE)
@@ -79,6 +91,8 @@ runArtemis <- function(
     concept_sets_folder = "cancer_cohorts",
     name = "cancer_cohorts"
   )
+  log4r::info(logger, "createCancerCohorts() complete; cancer_cohorts table created")
+  logCohortCounts(cdm[["cancer_cohorts"]], "All cancer cohorts combined (cancer_cohorts)")
 
   # createCancerCohorts() builds all cancer types into a single cohort table;
   # split out the requested cancers into their own cohort tables for ARTEMIS.
@@ -97,14 +111,20 @@ runArtemis <- function(
     }
 
     cohortTable <- paste0(cancer, "_cohort")
+    log4r::info(logger, sprintf("Subsetting '%s' (cohort_definition_id %s) into table '%s'",
+                                cancer, paste(cohort_id, collapse = ","), cohortTable))
     cdm[[cohortTable]] <- CohortConstructor::subsetCohorts(
       cohort = cdm[["cancer_cohorts"]],
       cohortId = cohort_id,
       name = cohortTable
     )
+    logCohortCounts(cdm[[cohortTable]], sprintf("Cohort '%s' (%s)", cohortTable, cancer))
     cohorts <- c(cohorts, cohortTable)
     cohort_condition_patterns[[cohortTable]] <- cancer_regimen_conditions[[cancer]]
   }
+
+  log4r::info(logger, sprintf("[Step 1] Complete: %d cohort(s) ready: %s",
+                              length(cohorts), paste(cohorts, collapse = ", ")))
 
   # ===========================================================================
   # Step 2: Preprocessing
@@ -123,7 +143,9 @@ runArtemis <- function(
     df <- con_dfFromCDM(cdm, cohort)
 
     cohort_rows <- nrow(df)
-    
+    log4r::info(logger, sprintf("con_df for %s: %d drug-exposure records, %d persons",
+                                cohort, cohort_rows, dplyr::n_distinct(df$person_id)))
+
     if (cohort_rows == 0){
       log4r::info(logger, sprintf("%s is empty, removing from cohort list so further analysis is not run", cohort))
       cohorts <- cohorts[cohorts != cohort]
@@ -139,16 +161,19 @@ runArtemis <- function(
     con_dfs[[cohort]] <- df
 
     # Prepare a data.frame of patient drug records used in the alignment step
+    log4r::info(logger, sprintf("create stringDF for %s", cohort))
     stringDF <- stringDF_from_cdm(con_df = df,
                               validDrugs = validdrugs)
-    
-    log4r::info(logger, sprintf("create stringDF for %s", cohort))
+    log4r::info(logger, sprintf("stringDF for %s: %d patients with valid drug records",
+                                cohort, nrow(stringDF)))
     stringDFs[[cohort]] <- stringDF
-  } 
+  }
 
   log4r::info(logger, "saving con_dfs, stringDFs")
   saveRDS(con_dfs, file.path(outputFolder, "con_dfs.rds"))
   saveRDS(stringDFs, file.path(outputFolder, "stringDFs.rds"))
+  log4r::info(logger, sprintf("[Step 2] Complete: prepared %d cohort(s) with valid drug records",
+                              length(stringDFs)))
 
   # ===========================================================================
   # Step 3: Alginment & post-processing
@@ -173,8 +198,11 @@ runArtemis <- function(
     } else {
       regimens
     }
+    log4r::info(logger, sprintf("%s: aligning against %d regimens (condition '%s')",
+                                cohort, nrow(cohort_regimens),
+                                if (is.null(pattern)) "all" else pattern))
 
-    log4r::info(logger, sprintf("run alginments for %s", cohort))
+    log4r::info(logger, sprintf("run alignments for %s", cohort))
     outputs[[cohort]] <- stringDFs[[cohort]] |>
     generateRawAlignments(
         regimens = cohort_regimens,
@@ -183,30 +211,38 @@ runArtemis <- function(
         method = "PropDiff",
         verbose = 0
     )
+    log4r::info(logger, sprintf("alignments for %s: %d rows", cohort, nrow(outputs[[cohort]])))
 
     ## Post-process
     log4r::info(logger, sprintf("run postprocessing for %s", cohort))
     processed[[cohort]] <- outputs[[cohort]] |>
         processAlignments(regimens = cohort_regimens,
                           regimenCombine = 28)
+    log4r::info(logger, sprintf("processed alignments for %s: %d rows", cohort, nrow(processed[[cohort]])))
 
     log4r::info(logger, sprintf("get drug eras for %s", cohort))
-    eras[[cohort]] <- processed[[cohort]] |> 
+    eras[[cohort]] <- processed[[cohort]] |>
         calculateEras()
-    
+    log4r::info(logger, sprintf("eras for %s: %d rows", cohort, nrow(eras[[cohort]])))
+
     log4r::info(logger, sprintf("get stats for %s", cohort))
     stats[[cohort]] <- eras[[cohort]] |>
       generateRegimenStats()
+    log4r::info(logger, sprintf("regimen stats for %s: %d rows", cohort, nrow(stats[[cohort]])))
   }
+
+  log4r::info(logger, "[Step 3] Complete: alignment and post-processing finished")
 
   # ===========================================================================
   # Step 4: Save outputs & generate report
   # ===========================================================================
 
+  log4r::info(logger, "[Step 4] Saving outputs")
   saveRDS(outputs, file.path(outputFolder,"outputs.rds"))
   saveRDS(processed, file.path(outputFolder, "processed.rds"))
   saveRDS(eras, file.path(outputFolder, "eras.rds"))
   saveRDS(stats, file.path(outputFolder, "stats.rds"))
+  log4r::info(logger, sprintf("[Step 4] Saved outputs.rds, processed.rds, eras.rds, stats.rds to %s", outputFolder))
 
   if (generateReportOutput) {
     log4r::info(logger, "Generating ARTEMIS report")
@@ -215,8 +251,10 @@ runArtemis <- function(
       nExamples = reportExamples,
       render = renderReport
     )
+    log4r::info(logger, "ARTEMIS report generation complete")
   }
 
   log4r::info(logger, "Leaving database connection open for caller-managed cleanup")
+  log4r::info(logger, "==================== ARTEMIS run complete ====================")
   invisible(NULL)
 }

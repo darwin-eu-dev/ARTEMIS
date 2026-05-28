@@ -65,6 +65,10 @@ RUN printf '%s\n' \
 
 COPY --chown=rstudio:rstudio DESCRIPTION ${ARTEMIS_HOME}/DESCRIPTION
 
+# Install GitHub-hosted dependencies (not on CRAN) so they are present before
+# ARTEMIS and its remaining Imports are resolved.
+RUN R -e "remotes::install_github('darwin-eu-studies/P4-C5-006', upgrade = 'never')"
+
 RUN R -e "remotes::install_deps('${ARTEMIS_HOME}', dependencies = c('Depends', 'Imports'), upgrade = 'never')"
 
 COPY --chown=rstudio:rstudio . ${ARTEMIS_HOME}
