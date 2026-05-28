@@ -1,0 +1,50 @@
+"Population (PERSON table):
+    - 6 persons of various ages born between 1960 and 2000
+    - 5 female, use gender_concept_id = 8532
+    - 1 male, use gender_concept_id = 8507
+    - Born between 1960 and 2000
+
+OBSERVATION_PERIOD:
+    - Start date between each patient's birth date and ends 2025-12-31
+    - All persons have a period_type_concept_id with id: 32828
+
+CONDITION_OCCURRENCE:
+    - 5 female patients have breast cancer (condition_concept_id = 36556994)
+    - Condition occurrence distributions:
+        - 3 (Patients 1, 2, 3) have condition occurrence after 2010-01-01 at >=18 years old
+        - 1 have condition occurrence after 2010-01-01 at <18 years old
+        - 1 have condition occurrence before 2010-01-01
+    - All condition dates within observation periods
+
+DRUG_EXPOSURE:
+
+    - Each of the drug exposures below to corresponding adult breast cancer patients (>=18 years, female, with condition occurence after 2010-01-01).
+        - Patient 1 (Regimen AC-T	HemOnc 47375):
+            - day 1: cyclophosphamide, doxorubicin, paclitaxel
+            - day 22: cyclophosphamide, doxorubicin, paclitaxel
+            - day 43: cyclophosphamide, doxorubicin, paclitaxel
+        - Patient 2 (CP-EC and Pembrolizumab	HemOnc 112659): 
+            - day 1: carboplatin, cyclophosphamide, epirubicin, paclitaxel, pembrolizumab
+            - day 8: carboplatin, paclitaxel
+            - day 15: carboplatin, paclitaxel
+        - Patient 3 (Cyclophosphamide and Docetaxel (TC)	HemOnc 6592): 
+            - day 1: cyclophosphamide, docetaxel
+            - day 22: cyclophosphamide, docetaxel
+            - day 43: cyclophosphamide, docetaxel
+    - Map drug ingredient names to appropriate OMOP drug ingredient concept_ids
+        - cyclophosphamide: 1310317
+        - doxorubicin: 1338512
+        - paclitaxel: 1378382
+        - carboplatin: 1344905
+        - epirubicin: 1344354
+        - pembrolizumab: 45775965
+        - docetaxel: 1315942
+        - trastuzumab: 1387104
+        - pertuzumab: 1298944
+        - hyaluronidase: 19073699
+    - Drug exposures must be chronologically consistent and fall within each patient’s observation period
+
+Output:
+    - Complete PERSON, OBSERVATION_PERIOD, CONDITION_OCCURRENCE, DEATH, and DRUG_EXPOSURE records
+    - All records with consistent dates within observation periods
+    - Use proper OMOP concept IDs for all drugs and conditions"

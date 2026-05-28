@@ -20,6 +20,7 @@ Output_Processed.csv
 ^\.git$
 ^\.venv$
 ^__pycache__$
+^inst/\.r-reticulate$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$

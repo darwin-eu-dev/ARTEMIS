@@ -31,8 +31,17 @@ Imports:
     gridExtra,
     methods,
     RColorBrewer,
-    viridis
+    RPostgres,
+    viridisLite,
+    CDMConnector,
+    log4r,
+    omopgenerics,
+    CodelistGenerator,
+    CohortConstructor,
+    P4C5006
 License: Apache License (>= 2)
+Remotes:
+    darwin-eu-studies/P4-C5-006
 VignetteBuilder: knitr
 Encoding: UTF-8
 LazyData: true

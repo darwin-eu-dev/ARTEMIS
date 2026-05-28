@@ -7,13 +7,14 @@
 removeOverlaps(df)
 }
 \arguments{
-\item{df}{A dataframe created by align() with cumulative times added by calculateRegimenTimes()}
+\item{df}{A dataframe created by align() with cumulative times added by add_cumultive_times_to_df()}
 }
 \value{
 A data.table object without removed overlaps
 }
 \description{
-Two overlap removal steps are performed:
+Three overlap removal steps are performed:
 #' 1. Remove overlaps between regimens with different names  
 #' 2. Remove overlaps between regimens with different number of components
+#' 3. Remove overlaps between regimens with the same name, same total alignment length, but different scores
 }

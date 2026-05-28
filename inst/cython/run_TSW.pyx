@@ -187,6 +187,7 @@ def align_patients_regimens_fast(
     str col_name_patient_record="seq",
     str col_name_regimens="shortString",
     str col_name_regName="regName",
+    str col_name_regCode="regCode",
     double g=0.4,
     double T=0.5,
     s=None,
@@ -204,6 +205,7 @@ def align_patients_regimens_fast(
     cdef Py_ssize_t n_patients = patient_records.shape[0]
 
     cdef np.ndarray regimen_names = regimens[col_name_regName].to_numpy(dtype=object)
+    cdef np.ndarray regimen_codes = regimens[col_name_regCode].to_numpy(dtype=object)
     cdef np.ndarray regimen_seqs = regimens[col_name_regimens].to_numpy(dtype=object)
     cdef Py_ssize_t n_regimens = regimen_seqs.shape[0]
 
@@ -239,10 +241,11 @@ def align_patients_regimens_fast(
                     method=method,
                 )
 
-                df.loc[:, "regName"] = regimen_names[j]
-                df.loc[:, "Regimen_full"] = regimen_seq
-                df.loc[:, "personID"] = patient_ids[i]
-                df.loc[:, "CompleteDrugRecord"] = patient_seq
+                df["regName"] = regimen_names[j]
+                df["regCode"] = regimen_codes[j]
+                df["Regimen_full"] = regimen_seq
+                df["personID"] = patient_ids[i]
+                df["DrugRecord_full"] = patient_seq
 
                 dfs.append(df)
 

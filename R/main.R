@@ -40,8 +40,8 @@
 #' @export
 generateRawAlignments <- function(stringDF,
                                   regimens,
-                                  g = 0.4,
-                                  Tfac = 0.5,
+                                  g,
+                                  Tfac,
                                   s = NULL,
                                   verbose = 0,
                                   mem = -1,
@@ -57,12 +57,30 @@ generateRawAlignments <- function(stringDF,
         stop(paste0("Error: ", obj_name, 
                     " is empty. No patient records found."))
     }
+    patient_meta_cols <- c("cohort_start_date", "cohort_end_date", "first_drug_exposure_day")
+    patient_meta_cols <- patient_meta_cols[patient_meta_cols %in% colnames(stringDF)]
+
     if (!exists("align_patients_regimens", mode = "function")) {
         py_functions = reticulate::import_from_path("main", path = system.file("python", package = "ARTEMIS"))
         align_patients_regimens = py_functions$align_patients_regimens
     }
 
-    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, method=method)
+    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=mem, method=method)
+  
+    output <- tryCatch({
+        if (!is.null(output) && !inherits(output, "try-error") && nrow(output) == 0) {
+            return(data.frame())
+        }
+        output
+        }, error = function(e) {
+
+        # FALLBACK: convert from python object
+        output <- output$to_dict(orient = "list") |>
+            reticulate::py_to_r() |>
+            as.data.frame()
+
+        output
+        })
 
     if (nrow(output) == 0) {
         cli::cat_bullet(
@@ -84,8 +102,89 @@ generateRawAlignments <- function(stringDF,
         dplyr::filter(!is.na(adjustedS) & !is.na(totAlign)) %>%
         dplyr::filter(totAlign > 0 & adjustedS > 0)
 
-    output$alignmentID <- 1:nrow(output)
+    if (length(patient_meta_cols) > 0) {
+        cohort_lookup <- stringDF %>%
+            dplyr::select(person_id, dplyr::all_of(patient_meta_cols)) %>%
+            dplyr::distinct()
+
+        output <- output %>%
+            dplyr::left_join(cohort_lookup, by = c("personID" = "person_id"))
+    }
     
     return(output)
 }
 
+
+#' Perform post-processing on a data frame of raw alignment results
+#' @param rawOutput An output dataframe produced by generateRawAlignments()
+#' @param regimenCombine The numeric value of days allowed between regimens of the same
+#' name before they are collapsed/summarised into a single regimen
+#' @param regimens The set of input regimens used to generate alignments, from which cycle lengths may be derived
+#' @param writeOut A variable indicating whether to save the set of drug records
+#' @param outputName The name for a given written output
+#' @return A dataframe processed alignments
+#' @export
+processAlignments <- function(rawOutput,
+                              regimenCombine,
+                              regimens = "none") {
+
+    if (nrow(rawOutput) == 0) {
+        cli::cat_bullet(
+            paste("No alignments detected", sep = ""),
+            bullet_col = "yellow",
+            bullet = "info"
+        )
+        return(data.frame()) 
+    }
+
+    IDs_All <- unique(rawOutput$personID)    
+    cli::cat_bullet(
+        paste(
+            "Performing post-processing of ", length(IDs_All),
+            " patients.\n Total alignments: ", dim(rawOutput)[1],
+            sep = ""
+        ),
+        bullet_col = "yellow",
+        bullet = "info"
+    )
+    
+    # Postprocess each patient individually
+    processedAll <- data.frame()
+
+    for (i in c(1:length(IDs_All))) {
+        newOutput <- rawOutput[rawOutput$personID == IDs_All[i], ]
+        
+        processed <- postprocessDF(newOutput, regimenCombine = regimenCombine)
+        processedAll <- dplyr::bind_rows(processedAll, processed)   
+        
+        progress(x = i, max = length(IDs_All))
+    }
+        
+    if (!is(regimens, "data.frame")) {
+        cli::cat_bullet(
+            paste("Adding regimen cycle length data...", sep = ""),
+            bullet_col = "yellow",
+            bullet = "info"
+        )
+        
+        regTemp <- regimens[, c("regName", "cycleLength")]
+        colnames(regTemp)[1] <- "component"
+        
+        processedAll <- merge(processedAll, regTemp, by = "component")
+        processedAll <- processedAll[order(processedAll$cycleLength, decreasing = TRUE), ]
+        processedAll <- processedAll[!duplicated(processedAll[, !colnames(processedAll) %in% c("cycleLength")]), ]
+    } else {
+        cli::cat_bullet(
+            paste("Regimen cycle length data not detected as input...", sep = ""),
+            bullet_col = "yellow",
+            bullet = "info"
+        )
+    }
+    
+    cli::cat_bullet("Complete!",
+                    bullet_col = "green",
+                    bullet = "tick")
+    
+    return(processedAll)
+    
+}

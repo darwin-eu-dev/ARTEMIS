@@ -1,0 +1,90 @@
+name: build-and-push-container-amd64
+
+# Builds the ARTEMIS image for linux/amd64 on a native amd64 runner using plain
+# `docker build` (no buildx/QEMU emulation, which is far faster) and pushes it to
+# the onconet Azure Container Registry with an "-amd64" tag suffix. The arm64
+# image is built by the companion build-and-push-container-arm64 workflow.
+#
+# Required GitHub Actions secrets:
+#   DOCKERHUB_USER, DOCKERHUB_PAT
+#       - credentials used to log in and push to the onconet ACR. Despite the
+#         name, these must be valid for that registry (e.g. a service principal
+#         with the AcrPush role, or the registry admin account).
+#   GH_PAT
+#       - GitHub PAT with read access to the private darwin-eu-studies/P4-C5-006
+#         repo; the Dockerfile installs it via a BuildKit secret (id=github_pat).
+#         GitHub forbids secret names starting with "GITHUB_", hence GH_PAT.
+
+on:
+  # TEMPORARY: test the workflow on the develop branch before it reaches main
+  # (workflow_dispatch/release only register from the default branch). Remove
+  # this push trigger once the build is verified.
+  push:
+    branches: [develop]
+    paths: [".github/workflows/build-and-push-container-amd64.yml"]
+  # Publish on a GitHub Release, and allow manual runs with an optional tag.
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Base image tag for manual runs (default: manual-<run_number>)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: onconet-fhg9fxc7hxgvc6ga.azurecr.io
+  IMAGE_NAME: artemis
+  ARCH: amd64
+
+jobs:
+  build-push-amd64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Tag selection (each tag carries an -amd64 suffix):
+      #   release    -> <release tag>-amd64  and  latest-amd64
+      #   manual run -> <input tag>-amd64, or manual-<run_number>-amd64 if blank
+      - name: Determine tags
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            BASE="${{ github.event.release.tag_name }}"
+            echo "tag1=${REGISTRY}/${IMAGE_NAME}:${BASE}-${ARCH}" >> "$GITHUB_OUTPUT"
+            echo "tag2=${REGISTRY}/${IMAGE_NAME}:latest-${ARCH}" >> "$GITHUB_OUTPUT"
+          else
+            BASE="${{ github.event.inputs.tag }}"
+            [ -z "${BASE}" ] && BASE="manual-${{ github.run_number }}"
+            echo "tag1=${REGISTRY}/${IMAGE_NAME}:${BASE}-${ARCH}" >> "$GITHUB_OUTPUT"
+            echo "tag2=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PAT }}
+
+      - name: Build and push (amd64)
+        env:
+          TAG1: ${{ steps.tags.outputs.tag1 }}
+          TAG2: ${{ steps.tags.outputs.tag2 }}
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
+          DOCKER_BUILDKIT: "1"  # required for the Dockerfile's BuildKit secret mount
+        run: |
+          docker build \
+            --file ./Dockerfile \
+            --secret id=github_pat,env=GITHUB_PAT \
+            --tag "${TAG1}" \
+            .
+          docker push "${TAG1}"
+          if [ -n "${TAG2}" ]; then
+            docker tag "${TAG1}" "${TAG2}"
+            docker push "${TAG2}"
+          fi

@@ -4,14 +4,10 @@
 \alias{plotAlignment}
 \title{Plots a full alignment output}
 \usage{
-plotAlignment(pa, regimens, collapse_regimens = TRUE, add_summary = TRUE)
+plotAlignment(pa, known_drugs = NULL)
 }
 \arguments{
-\item{pa}{A patient alignment dataframe created by processAlignments() or generateRawAlignments()}
-
-\item{regimens}{A regimen dataframe, containing required regimen column shortStrings. Used to determine which drugs are missing in regimens for summary report and plot.}
-
-\item{collapse_regimens}{A boolean indicating whether to collapse regimens into a single row}
+\item{pa}{A patient alignment dataframe created by processAlignments() or calculateEras}
 }
 \value{
 plot - A list of ggplot objects

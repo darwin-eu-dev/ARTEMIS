@@ -21,6 +21,8 @@ vignettes/data/Artemis_Vignette_5.3_0.8.duckdb.wal
 /output*
 Test*.Rds
 main_test.py
+*_test.xlsx
+Results*
 *.pyc
 .tmp
 __pycache__
@@ -33,5 +35,3 @@ __pycache__
 *.c
 .vscode/settings.json
 tests/testthat/_snaps*
-/docs/
-docs

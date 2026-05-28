@@ -186,6 +186,7 @@ def align_patients_regimens(
     col_name_patient_record="seq",
     col_name_regimens="shortString",
     col_name_regName="regName",
+    col_name_regCode="regCode",
     g=0.4,
     T=0.5,
     s=None,
@@ -221,10 +222,11 @@ def align_patients_regimens(
                     method=method,
                 )
 
-                df.loc[:, "regName"] = row2[col_name_regName]
-                df.loc[:, "Regimen_full"] = row2[col_name_regimens]
-                df.loc[:, "personID"] = row1[col_name_patient_id]
-                df.loc[:, "CompleteDrugRecord"] = row1[col_name_patient_record]
+                df["regName"] = row2[col_name_regName]
+                df["regCode"] = row2[col_name_regCode]
+                df["Regimen_full"] = row2[col_name_regimens]
+                df["personID"] = row1[col_name_patient_id]
+                df["DrugRecord_full"] = row1[col_name_patient_record]
                 dfs.append(df)
     if not dfs:
         return pd.DataFrame()  # Return empty DataFrame if no alignments found
@@ -250,6 +252,7 @@ def main():
         {
             "regName": ["Regimen1"],
             "shortString": ["14.pemetrexed;14.pemetrexed;"],
+            "regCode": ["1"],
         }
     )
 

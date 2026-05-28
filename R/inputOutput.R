@@ -1,3 +1,54 @@
+#' Generate a con_df dataframe using CDMConnector
+#' @param cdm An OMOP cdm reference
+#' @param cohortName Name of cohort table
+#' @param cdmSchema A schema containing a valid OMOP CDM
+#' @param writeSchema A schema where the user has write access
+#' @return A con_df dataframe
+#' @export
+con_dfFromCDM <- function(cdm, cohortName, cdmSchema = NULL, writeSchema = NULL){
+  
+  con_df <- cdm$drug_exposure |> 
+    dplyr::inner_join(
+      cdm[[cohortName]],
+      by = c("person_id" = "subject_id")
+    ) |> 
+    dplyr::left_join(
+      cdm$concept_ancestor,
+      by = c("drug_concept_id" = "descendant_concept_id")
+    ) |> 
+    dplyr::left_join(
+      cdm$concept,
+      by = c("ancestor_concept_id" = "concept_id")
+    ) |> 
+    dplyr::filter(
+      tolower(concept_class_id) == "ingredient"
+    ) |> 
+    dplyr::transmute(
+      person_id,
+      cohort_start_date,
+      cohort_end_date,
+      drug_exposure_start_date,
+      drug_concept_id,
+      ancestor_concept_id,
+      concept_name
+    ) |>
+    dplyr::collect()
+
+  con_df <- con_df |>
+    dplyr::mutate(
+      person_id = as.character(person_id),
+      cohort_start_date = normalize_date(cohort_start_date),
+      cohort_end_date = normalize_date(cohort_end_date),
+      drug_exposure_start_date = normalize_date(drug_exposure_start_date)
+    ) |>
+    dplyr::mutate(
+      drug_exposure_day_relative = as.numeric(drug_exposure_start_date - cohort_start_date)
+    )
+
+  return(con_df)
+}
+
+
 #' Generate a con_df dataframe without using CDMConnector
 #' @param connectionDetails A set of DatabaseConnector connectiondetails
 #' @param json A loaded cohort from loadJSON()
@@ -34,6 +85,8 @@ getConDF <- function(connectionDetails, json, name, cdmSchema, writeSchema){
   sql_template <- "
 WITH filtered_drug_exposure AS (
   SELECT CAST(drug_exposure.person_id AS VARCHAR) AS person_id,
+         ch.cohort_start_date,
+         ch.cohort_end_date,
          drug_exposure.drug_exposure_start_date,
          drug_exposure.drug_concept_id,
          concept_ancestor.ancestor_concept_id,
@@ -53,7 +106,15 @@ SELECT * FROM filtered_drug_exposure;
   con_df <- DatabaseConnector::dbGetQuery(conn = connection,
                                         statement = rendered_sql)
 
-  con_df <- as.data.frame(con_df)
+  con_df <- as.data.frame(con_df) |>
+    dplyr::mutate(
+      cohort_start_date = normalize_date(cohort_start_date),
+      cohort_end_date = normalize_date(cohort_end_date),
+      drug_exposure_start_date = normalize_date(drug_exposure_start_date)
+    ) |>
+    dplyr::mutate(
+      drug_exposure_day_relative = as.numeric(drug_exposure_start_date - cohort_start_date)
+    )
 
   message(paste(nrow(con_df), " subjects with a drug exposure found"))
 
@@ -72,6 +133,11 @@ stringDF_from_cdm <- function(con_df, validDrugs) {
   cli::cat_bullet("Filtering dataframe to valid drugs only...",
                   bullet_col = "yellow", bullet = "info")
 
+  # con_df may be a lazy/remote table or an already-collected data.frame
+  # (e.g. the output of con_dfFromCDM()); only collect remote tables.
+  if (inherits(con_df, "tbl_lazy")) {
+    con_df <- dplyr::collect(con_df)
+  }
   con_df <- con_df[con_df$ancestor_concept_id %in% validDrugs$valid_concept_id,]
 
   cli::cat_bullet("Generating lag times and constructing drug record strings...",
@@ -93,7 +159,12 @@ stringDF_from_cdm <- function(con_df, validDrugs) {
 
   con_df_out2 <- con_df_out  %>%
     dplyr::group_by(.data$person_id) %>%
-    dplyr::summarise(seq = paste(.data$dayTaken2, ".",.data$concept_name, ";", collapse = "", sep = ""))
+    dplyr::summarise(
+      cohort_start_date = dplyr::first(.data$cohort_start_date),
+      cohort_end_date = dplyr::first(.data$cohort_end_date),
+      first_drug_exposure_day = min(.data$drug_exposure_day_relative, na.rm = TRUE),
+      seq = paste(.data$dayTaken2, ".",.data$concept_name, ";", collapse = "", sep = "")
+    )
 
   con_df_out2$seq <- gsub(" ","",gsub(",","_",con_df_out2$seq))
 
@@ -163,8 +234,10 @@ loadRegimens <- function(condition = "all", absolute = NULL,
                                         "multipleMyeloma" = c("Multiple Myeloma")),
                         concept_file = NULL,
                         ignore_default_list = FALSE) {
-  regimens_env <- new.env()
-  assign("regimens_env", regimens_env, envir = .GlobalEnv)
+  # Fix (Copilot review): reuse the package-internal environment (defined in
+  # preAlign.R) instead of creating one in the user's .GlobalEnv. Reset it so
+  # each call starts clean.
+  rm(list = ls(regimens_env, all.names = TRUE), envir = regimens_env)
 
   # Load from absolute path if provided
   if (!is.null(absolute)) {
@@ -182,8 +255,8 @@ loadRegimens <- function(condition = "all", absolute = NULL,
   } else {
     # Load from ARTEMIS package if no absolute path is given
     data("regimens", package = "ARTEMIS", envir = regimens_env)
-    
-    if (!exists("regimens")) {
+
+    if (!exists("regimens", envir = regimens_env)) {
       stop("Error: Failed to load 'regimens' from ARTEMIS package.")
     }
   }
