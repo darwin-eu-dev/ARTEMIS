@@ -36,13 +36,17 @@ Pick **one** of the three options below to obtain the image.
 ### Option A — Pull from Azure Container Registry (recommended)
 
 You need access to the `onconet` registry, granted by the coordinating center
-(DTZ). With the [Azure CLI](https://learn.microsoft.com/cli/azure/) installed:
+(DTZ). Images are published **per architecture** with an `-amd64` or `-arm64`
+tag suffix — choose the one matching your host (most servers are `amd64`; Apple
+Silicon Macs are `arm64`).
+
+With the [Azure CLI](https://learn.microsoft.com/cli/azure/) installed:
 
 ```bash
 az login
 az acr login --name onconet
-docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:latest
-# or a specific release, e.g. :v1.6.0
+docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:latest-amd64
+# or a specific release, e.g. :v1.6.0-amd64   (use the -arm64 tags on arm64 hosts)
 ```
 
 If DTZ instead provides a registry username/token, you can log in to the
@@ -50,7 +54,7 @@ registry directly without the Azure CLI:
 
 ```bash
 docker login onconet-thg9fxc7hxgvc6ga.azurecr.io
-docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>
+docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64
 ```
 
 ### Option B — Build the image from source
@@ -76,8 +80,8 @@ On a machine **with** internet access, pull (Option A) or build (Option B) the
 image, then export it to a tar archive:
 
 ```bash
-docker save onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag> -o artemis_<tag>.tar
-# optional: gzip artemis_<tag>.tar
+docker save onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64 -o artemis_<tag>-amd64.tar
+# optional: gzip artemis_<tag>-amd64.tar
 ```
 
 Copy the `.tar` (or `.tar.gz`) to the offline machine and import it:
@@ -98,7 +102,7 @@ docker run --rm -it \
   -p 8787:8787 \
   -e PASSWORD=<choose_a_password> \
   -v "$(pwd)/Results:/home/rstudio/ARTEMIS/Results" \
-  onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>
+  onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>-amd64
 ```
 
 Open <http://localhost:8787> and log in as user `rstudio` with the password you
