@@ -6,16 +6,14 @@ name: build-and-push-container-amd64
 # image is built by the companion build-and-push-container-arm64 workflow.
 #
 # Required GitHub Actions secrets:
-#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
-#       - OIDC (federated) login to Azure; no Azure password is stored.
+#   DOCKERHUB_USER, DOCKERHUB_PAT
+#       - credentials used to log in and push to the onconet ACR. Despite the
+#         name, these must be valid for that registry (e.g. a service principal
+#         with the AcrPush role, or the registry admin account).
 #   GH_PAT
 #       - GitHub PAT with read access to the private darwin-eu-studies/P4-C5-006
 #         repo; the Dockerfile installs it via a BuildKit secret (id=github_pat).
 #         GitHub forbids secret names starting with "GITHUB_", hence GH_PAT.
-#
-# Azure setup: the identity behind AZURE_CLIENT_ID must have a federated
-# credential trusting this repo (and the triggering ref/environment), and must
-# hold the AcrPush role on the onconet registry.
 
 on:
   # Publish on a GitHub Release, and allow manual runs with an optional tag.
@@ -28,13 +26,10 @@ on:
         required: false
         default: ""
 
-# OIDC needs id-token: write to mint the federated token; contents: read to checkout.
 permissions:
-  id-token: write
   contents: read
 
 env:
-  ACR_NAME: onconet
   REGISTRY: onconet-thg9fxc7hxgvc6ga.azurecr.io
   IMAGE_NAME: artemis
   ARCH: amd64
@@ -63,15 +58,12 @@ jobs:
             echo "tag2=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
+      - name: Log in to ACR
+        uses: docker/login-action@v3
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: ACR login
-        run: az acr login --name ${{ env.ACR_NAME }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PAT }}
 
       - name: Build and push (amd64)
         env:
