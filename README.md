@@ -18,6 +18,114 @@ Although applicable to various contexts, ARTEMIS is primarily intended for cance
 ### Quick to Docs:
 * See [release notes](docs/branch-versioning.md) for versioning and contribution.
 
+## Running the study with Docker
+
+For participating data partners, the recommended way to run the study is the
+pre-built Docker image. It bundles ARTEMIS, all R and Python dependencies, the
+JDBC drivers, and RStudio Server, so no manual installation is required.
+
+The registry is the DARWIN EU® Azure Container Registry (ACR):
+
+```
+Login server : onconet-thg9fxc7hxgvc6ga.azurecr.io
+Image        : onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis
+```
+
+Pick **one** of the three options below to obtain the image.
+
+### Option A — Pull from Azure Container Registry (recommended)
+
+You need access to the `onconet` registry, granted by the coordinating center
+(DTZ). With the [Azure CLI](https://learn.microsoft.com/cli/azure/) installed:
+
+```bash
+az login
+az acr login --name onconet
+docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:latest
+# or a specific release, e.g. :v1.6.0
+```
+
+If DTZ instead provides a registry username/token, you can log in to the
+registry directly without the Azure CLI:
+
+```bash
+docker login onconet-thg9fxc7hxgvc6ga.azurecr.io
+docker pull onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>
+```
+
+### Option B — Build the image from source
+
+The private dependency `P4C5006` is installed during the build, so you must
+supply a GitHub Personal Access Token (with read access to that repo) as a
+BuildKit secret:
+
+```bash
+git clone https://github.com/darwin-eu-dev/ARTEMIS
+cd ARTEMIS
+
+DOCKER_BUILDKIT=1 GITHUB_PAT=<your_github_pat> \
+  docker build \
+    --secret id=github_pat,env=GITHUB_PAT \
+    -t artemis:local \
+    .
+```
+
+### Option C — Transfer to an air-gapped / offline machine (save & load)
+
+On a machine **with** internet access, pull (Option A) or build (Option B) the
+image, then export it to a tar archive:
+
+```bash
+docker save onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag> -o artemis_<tag>.tar
+# optional: gzip artemis_<tag>.tar
+```
+
+Copy the `.tar` (or `.tar.gz`) to the offline machine and import it:
+
+```bash
+docker load -i artemis_<tag>.tar
+```
+
+### Running the container
+
+The image serves RStudio Server on port 8787. JDBC drivers are already baked
+into the image (`/opt/hades/jdbc_drivers`), so a database connection works out
+of the box. Mount a host folder to the results directory so outputs persist
+after the container stops:
+
+```bash
+docker run --rm -it \
+  -p 8787:8787 \
+  -e PASSWORD=<choose_a_password> \
+  -v "$(pwd)/Results:/home/rstudio/ARTEMIS/Results" \
+  onconet-thg9fxc7hxgvc6ga.azurecr.io/artemis:<tag>
+```
+
+Open <http://localhost:8787> and log in as user `rstudio` with the password you
+set. In RStudio, edit your database connection details and run the study, for
+example:
+
+```r
+library(ARTEMIS)
+
+cdm <- CDMConnector::cdmFromCon(
+  con,                       # your DBI/DatabaseConnector connection
+  cdmSchema   = cdmSchema,
+  writeSchema = writeSchema
+)
+
+runArtemis(
+  cdm,
+  outputFolder         = "Results",
+  cancers              = c("breast_cancer", "lung_cancer"),
+  generateReportOutput = TRUE
+)
+```
+
+`extras/codeToRun.R` is a complete, editable template for this step. All
+results are written to the mounted `Results/` folder (see
+[Reviewing results](#reviewing-results-and-returning-them-to-dtz) below).
+
 ## Installation
 
 Before installing ARTEMIS, ensure that **Python (version ≥ 3.12)** is installed on your system.  
@@ -260,6 +368,52 @@ Finally, basic statistics is providedy by:
     regStats <- processedEras %>% g
             enerateRegimenStats()
 
+
+## Reviewing results and returning them to DTZ
+
+`runArtemis()` writes everything to the `outputFolder` (default `Results/`).
+After a run, that folder contains:
+
+| File | Level | Description |
+| ---- | ----- | ----------- |
+| `log.txt` | metadata | Full run log: every step plus per-cohort person and record counts. |
+| `cdm_snapshot.csv` | metadata | CDM snapshot (source name, vocabulary version, etc.). |
+| `stats.rds` | aggregated | Per-cohort regimen statistics (counts, frequencies, score/length summaries). |
+| `artemis_report.html` | mixed | Summary report (only if `generateReportOutput = TRUE`). Includes a few **example patient timelines**. |
+| `con_dfs.rds` | patient-level | Per-cohort patient drug-exposure records. |
+| `stringDFs.rds` | patient-level | Per-cohort encoded patient drug-record strings. |
+| `outputs.rds` | patient-level | Raw per-patient regimen alignments. |
+| `processed.rds` | patient-level | Post-processed per-patient regimen alignments. |
+| `eras.rds` | patient-level | Per-patient treatment eras / lines of treatment. |
+
+### Reviewing
+
+1. Open `artemis_report.html` in a browser for the summary.
+2. Read `log.txt` to confirm each step completed and to check the cohort person
+   and record counts are sensible for your database.
+3. Inspect `stats.rds` in R (`readRDS("Results/stats.rds")`) for the aggregated
+   regimen statistics.
+
+### What to return to the coordinating center (DTZ)
+
+> ⚠️ **Always run a disclosure review against your local data-governance rules
+> and the study protocol before sharing anything.** The exact deliverable list
+> is defined by the study protocol — confirm with DTZ if in doubt.
+
+Default guidance:
+
+- **Return** the aggregated and metadata files after review:
+  `stats.rds`, `log.txt`, `cdm_snapshot.csv`, and (if generated)
+  `artemis_report.html`.
+- Apply your site's **minimum cell count** suppression to `stats.rds` (the
+  `count`/`frequency` columns) and to the report before sharing.
+- The `artemis_report.html` embeds a small number of **example patient drug
+  timelines** — review it specifically for disclosure, or regenerate the report
+  with `reportExamples = 0` if example timelines are not permitted.
+- **Do not return** the patient-level files (`con_dfs.rds`, `stringDFs.rds`,
+  `outputs.rds`, `processed.rds`, `eras.rds`) unless the protocol and your data
+  governance explicitly allow row-level data to leave your environment. They are
+  kept locally to support debugging and re-analysis.
 
 ## Getting help
 

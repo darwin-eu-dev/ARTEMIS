@@ -1,0 +1,98 @@
+name: build-and-push-container
+
+# Builds the ARTEMIS Docker image and pushes it to Azure Container Registry (ACR).
+#
+# Required GitHub Actions secrets:
+#   AZURE_CLIENT_ID        - app/managed-identity client ID for OIDC login
+#   AZURE_TENANT_ID        - Azure AD tenant ID
+#   AZURE_SUBSCRIPTION_ID  - subscription that contains the ACR
+#   GH_PAT                 - GitHub PAT with read access to the private
+#                            darwin-eu-studies/P4-C5-006 repo (the Dockerfile
+#                            installs it via a BuildKit secret). GitHub forbids
+#                            secret names starting with "GITHUB_", hence GH_PAT.
+#
+# Azure setup required for OIDC to work:
+#   - The Azure identity (app registration / managed identity referenced by
+#     AZURE_CLIENT_ID) must have a *federated credential* that trusts this
+#     GitHub repo (and the branch/tag/environment this workflow runs from), so
+#     the workflow can assume the identity without a stored secret.
+#   - That same identity needs the **AcrPush** role on the `onconet` registry.
+
+on:
+  # Publish the image whenever a GitHub Release is published...
+  release:
+    types: [published]
+  # ...and allow manual builds with an optional custom tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag for manual runs (default: manual-<run_number>)"
+        required: false
+        default: ""
+
+# OIDC needs id-token: write so the runner can request a short-lived federated
+# token to authenticate to Azure without any stored Azure passwords.
+# contents: read is only needed to checkout the repository.
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_NAME: onconet
+  REGISTRY: onconet-thg9fxc7hxgvc6ga.azurecr.io
+  IMAGE_NAME: artemis
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Choose the image tags:
+      #   - release events  -> the release tag (e.g. v1.2.3) plus "latest"
+      #   - manual runs      -> the input tag, or "manual-<run_number>" if blank
+      - name: Determine image tags
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            {
+              echo "tags<<EOF"
+              echo "${REGISTRY}/${IMAGE_NAME}:${{ github.event.release.tag_name }}"
+              echo "${REGISTRY}/${IMAGE_NAME}:latest"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            TAG="${{ github.event.inputs.tag }}"
+            if [ -z "${TAG}" ]; then
+              TAG="manual-${{ github.run_number }}"
+            fi
+            echo "tags=${REGISTRY}/${IMAGE_NAME}:${TAG}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Federated (OIDC) login to Azure - no client secret required.
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Authenticate the local Docker client to ACR using the Azure session above.
+      - name: ACR login
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: "."
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          # P4C5006 is a private GitHub repo; the Dockerfile installs it with a
+          # PAT exposed as a BuildKit secret (id=github_pat). See GH_PAT above.
+          secrets: |
+            github_pat=${{ secrets.GH_PAT }}
