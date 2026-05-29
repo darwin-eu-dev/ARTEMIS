@@ -81,7 +81,11 @@ RUN --mount=type=secret,id=github_pat \
     GITHUB_PAT="$(cat /run/secrets/github_pat 2>/dev/null)" \
     R -e "remotes::install_github('darwin-eu-studies/P4-C5-006', auth_token = Sys.getenv('GITHUB_PAT'), upgrade = 'never')"
 
-RUN R -e "remotes::install_deps('${ARTEMIS_HOME}', dependencies = c('Depends', 'Imports'), upgrade = 'never')"
+# Needs the PAT too: install_deps resolves ARTEMIS's Remotes: (P4C5006) against
+# the private GitHub repo, which 404s without authentication.
+RUN --mount=type=secret,id=github_pat \
+    GITHUB_PAT="$(cat /run/secrets/github_pat 2>/dev/null)" \
+    R -e "remotes::install_deps('${ARTEMIS_HOME}', dependencies = c('Depends', 'Imports'), upgrade = 'never')"
 
 COPY --chown=rstudio:rstudio . ${ARTEMIS_HOME}
 
